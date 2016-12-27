@@ -5,7 +5,7 @@ import (
 )
 
 // CreateApplication creates a new application in Swan
-// 		application:		the structure holding the application configuration
+// application:		the structure holding the application configuration
 func (r *swanClient) CreateApplication(version *Version) (*Application, error) {
 	result := new(Application)
 	if err := r.apiPost(swanAPIApps, &version, result); err != nil {
