@@ -28,7 +28,6 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 	for _, swanClient := range indexer.SwanClients {
 		var filter map[string][]string
 		if apps, err := swanClient.Applications(filter); err == nil {
-			fmt.Printf("applications:%s\n", apps)
 			for _, app := range apps {
 				store.Set(app.ID+app.Name, Document{
 					ID:   app.ID,
@@ -38,21 +37,20 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 						"AppId": app.ID,
 					},
 				})
+				log.Infof("add app:%s\n", app.ID)
 				if appDetail, err := swanClient.GetApplication(app.ID); err == nil {
-					fmt.Printf("appDetail:%s\n", appDetail)
-					fmt.Printf("appDetail tasks:%s\n", appDetail.Tasks)
 					for _, task := range appDetail.Tasks {
-						taskId := strings.Split(task.ID, "-")[0]
-						fmt.Println("task id:%s", task.ID)
+						taskNum := strings.Split(task.ID, "-")[0]
 						store.Set(task.ID, Document{
 							ID:   task.ID,
 							Name: task.ID,
 							Type: DOCUMENT_TASK,
 							Param: map[string]string{
 								"AppId":  app.ID,
-								"TaskId": taskId,
+								"TaskId": taskNum,
 							},
 						})
+						log.Infof("add task:%s\n", task.ID)
 					}
 				} else {
 					log.Warnf(fmt.Sprintf("get application [%s] error: %s", app.ID, err))
