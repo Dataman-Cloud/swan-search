@@ -69,7 +69,7 @@ type Document struct {
 }
 
 func Init() {
-	log.Infof("begin to init and enable plugin: %s", apiplugin.Search)
+	log.Infof("begin to init search feature")
 
 	apiPlugin := &apiplugin.ApiPlugin{
 		Name:         apiplugin.Search,
