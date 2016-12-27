@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"sync"
 )
@@ -16,10 +17,14 @@ import (
 // Swan is the interface to the Swan API
 type Swan interface {
 	// -- APPLICATIONS ---
-	// create an application in marathon
+	// create an application in swan
 	CreateApplication(version *Version) (*Application, error)
-	// get a list of applications from marathon
-	Applications() ([]*Application, error)
+	// get a list of applications from swan
+	Applications(url.Values) ([]*Application, error)
+	// delete an application in swan
+	DeleteApplication(appID string) error
+	// get an applications from swan
+	GetApplication(appID string) (*Application, error)
 }
 
 var (
@@ -109,7 +114,8 @@ func (r *swanClient) apiCall(method, uri string, body, result interface{}) error
 	if response.StatusCode >= 200 && response.StatusCode <= 299 {
 		if result != nil {
 			if err := json.Unmarshal(respBody, result); err != nil {
-				r.debugLog.Printf("apiCall(): failed to unmarshall the response from marathon, error: %s\n", err)
+				//r.debugLog.Printf("apiCall(): failed to unmarshall the response from marathon, error: %s\n", err)
+				fmt.Printf("apiCall(): failed to unmarshall the response from marathon, error: %s\n", err)
 				return ErrInvalidResponse
 			}
 		}
@@ -143,26 +149,4 @@ var oneLogLineRegex = regexp.MustCompile(`(?m)^\s*`)
 // escapes new line characters.
 func oneLogLine(in []byte) []byte {
 	return bytes.Replace(oneLogLineRegex.ReplaceAll(in, nil), []byte("\n"), []byte("\\n "), -1)
-}
-
-// CreateApplication creates a new application in Swan
-// 		application:		the structure holding the application configuration
-func (r *swanClient) CreateApplication(version *Version) (*Application, error) {
-	result := new(Application)
-	if err := r.apiPost("v1/apps", &version, result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// Applications retrieves an array of all the applications which are running in marathon
-func (r *swanClient) Applications() ([]*Application, error) {
-	applications := new([]*Application)
-	err := r.apiGet("v1/apps", nil, applications)
-	if err != nil {
-		return nil, err
-	}
-
-	return *applications, nil
 }

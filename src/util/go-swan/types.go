@@ -1,24 +1,36 @@
 package swan
 
+type Application struct {
+	ID              string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name            string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Version         *Version `protobuf:"bytes,3,opt,name=version" json:"version,omitempty"`
+	ProposedVersion *Version `protobuf:"bytes,4,opt,name=proposedVersion" json:"proposedVersion,omitempty"`
+	ClusterId       string   `protobuf:"bytes,5,opt,name=clusterId,proto3" json:"clusterId,omitempty"`
+	State           string   `protobuf:"bytes,6,opt,name=state,proto3" json:"state,omitempty"`
+	CreatedAt       int64    `protobuf:"varint,7,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	UpdatedAt       int64    `protobuf:"varint,8,opt,name=updatedAt,proto3" json:"updatedAt,omitempty"`
+}
+
 type Version struct {
-	ID           string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	AppId        string            `protobuf:"bytes,2,opt,name=appId,proto3" json:"appId,omitempty"`
-	Command      string            `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
-	Cpus         float64           `protobuf:"fixed64,4,opt,name=cpus,proto3" json:"cpus,omitempty"`
-	Mem          float64           `protobuf:"fixed64,5,opt,name=mem,proto3" json:"mem,omitempty"`
-	Disk         float64           `protobuf:"fixed64,6,opt,name=disk,proto3" json:"disk,omitempty"`
-	Instances    int32             `protobuf:"varint,7,opt,name=instances,proto3" json:"instances,omitempty"`
-	RunAs        string            `protobuf:"bytes,8,opt,name=runAs,proto3" json:"runAs,omitempty"`
-	Container    *Container        `protobuf:"bytes,9,opt,name=container" json:"container,omitempty"`
-	Labels       map[string]string `protobuf:"bytes,10,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	HealthChecks []*HealthCheck    `protobuf:"bytes,11,rep,name=healthChecks" json:"healthChecks,omitempty"`
-	Env          map[string]string `protobuf:"bytes,12,rep,name=env" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	KillPolicy   *KillPolicy       `protobuf:"bytes,13,opt,name=killPolicy" json:"killPolicy,omitempty"`
-	UpdatePolicy *UpdatePolicy     `protobuf:"bytes,14,opt,name=updatePolicy" json:"updatePolicy,omitempty"`
-	Constraints  []string          `protobuf:"bytes,15,rep,name=constraints" json:"constraints,omitempty"`
-	Uris         []string          `protobuf:"bytes,16,rep,name=uris" json:"uris,omitempty"`
-	Ip           []string          `protobuf:"bytes,17,rep,name=ip" json:"ip,omitempty"`
-	Mode         string            `protobuf:"bytes,18,opt,name=mode,proto3" json:"mode,omitempty"`
+	ID                string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	PerviousVersionID string            `protobuf:"bytes,2,opt,name=perviousVersionID,proto3" json:"perviousVersionID,omitempty"`
+	Command           string            `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	Cpus              float64           `protobuf:"fixed64,4,opt,name=cpus,proto3" json:"cpus,omitempty"`
+	Mem               float64           `protobuf:"fixed64,5,opt,name=mem,proto3" json:"mem,omitempty"`
+	Disk              float64           `protobuf:"fixed64,6,opt,name=disk,proto3" json:"disk,omitempty"`
+	Instances         int32             `protobuf:"varint,7,opt,name=instances,proto3" json:"instances,omitempty"`
+	RunAs             string            `protobuf:"bytes,8,opt,name=runAs,proto3" json:"runAs,omitempty"`
+	Container         *Container        `protobuf:"bytes,9,opt,name=container" json:"container,omitempty"`
+	Labels            map[string]string `protobuf:"bytes,10,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	HealthChecks      []*HealthCheck    `protobuf:"bytes,11,rep,name=healthChecks" json:"healthChecks,omitempty"`
+	Env               map[string]string `protobuf:"bytes,12,rep,name=env" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	KillPolicy        *KillPolicy       `protobuf:"bytes,13,opt,name=killPolicy" json:"killPolicy,omitempty"`
+	UpdatePolicy      *UpdatePolicy     `protobuf:"bytes,14,opt,name=updatePolicy" json:"updatePolicy,omitempty"`
+	Constraints       []string          `protobuf:"bytes,15,rep,name=constraints" json:"constraints,omitempty"`
+	Uris              []string          `protobuf:"bytes,16,rep,name=uris" json:"uris,omitempty"`
+	Ip                []string          `protobuf:"bytes,17,rep,name=ip" json:"ip,omitempty"`
+	Mode              string            `protobuf:"bytes,18,opt,name=mode,proto3" json:"mode,omitempty"`
+	AppId             string            `protobuf:"bytes,19,opt,name=appId,proto3" json:"appId,omitempty"`
 }
 
 type Container struct {
@@ -83,19 +95,4 @@ type UpdatePolicy struct {
 
 type KillPolicy struct {
 	Duration int64 `protobuf:"varint,1,opt,name=duration,proto3" json:"duration,omitempty"`
-}
-
-type Application struct {
-	ID                string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name              string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Instances         uint64 `protobuf:"varint,3,opt,name=instances,proto3" json:"instances,omitempty"`
-	UpdatedInstances  uint64 `protobuf:"varint,4,opt,name=updatedInstances,proto3" json:"updatedInstances,omitempty"`
-	RunningInstances  uint64 `protobuf:"varint,5,opt,name=runningInstances,proto3" json:"runningInstances,omitempty"`
-	RollbackInstances uint64 `protobuf:"varint,6,opt,name=rollbackInstances,proto3" json:"rollbackInstances,omitempty"`
-	RunAs             string `protobuf:"bytes,7,opt,name=runAs,proto3" json:"runAs,omitempty"`
-	ClusterId         string `protobuf:"bytes,8,opt,name=clusterId,proto3" json:"clusterId,omitempty"`
-	Status            string `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
-	Created           int64  `protobuf:"varint,10,opt,name=created,proto3" json:"created,omitempty"`
-	Updated           int64  `protobuf:"varint,11,opt,name=updated,proto3" json:"updated,omitempty"`
-	Mode              string `protobuf:"bytes,12,opt,name=mode,proto3" json:"mode,omitempty"`
 }

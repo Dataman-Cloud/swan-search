@@ -1,7 +1,10 @@
 package search
 
 import (
+	"fmt"
+
 	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
+	log "github.com/Sirupsen/logrus"
 )
 
 const (
@@ -21,6 +24,24 @@ func NewSwanIndex(SwanClients []swanclient.Swan) *SwanIndexer {
 }
 
 func (indexer *SwanIndexer) Index(store *DocumentStorage) {
+	for _, swanClient := range indexer.SwanClients {
+		var filter map[string][]string
+		if apps, err := swanClient.Applications(filter); err == nil {
+			fmt.Printf("applications:%+v", apps)
+			for _, app := range apps {
+				store.Set(app.ID+app.Name, Document{
+					ID:   app.ID,
+					Name: app.Name,
+					Type: DOCUMENT_APP,
+					Param: map[string]string{
+						"AppId": app.ID,
+					},
+				})
+			}
+		} else {
+			log.Warnf("get applications error:", err)
+		}
+	}
 	//if nodes, err := indexer.SwanDockerClient.ListNode(types.NodeListOptions{}); err == nil {
 	//	for _, node := range nodes {
 	//		store.Set(node.ID+node.Description.Hostname, Document{
