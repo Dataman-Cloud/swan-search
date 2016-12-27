@@ -3,9 +3,6 @@ package search
 import (
 	"time"
 
-	"github.com/Dataman-Cloud/crane/src/plugins/apiplugin"
-
-	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 )
 
@@ -66,19 +63,6 @@ type Document struct {
 	Type    string
 	GroupId uint64 `json:"-"`
 	Param   map[string]string
-}
-
-func Init() {
-	log.Infof("begin to init search feature")
-
-	apiPlugin := &apiplugin.ApiPlugin{
-		Name:         apiplugin.Search,
-		Dependencies: []string{},
-		Instance:     &SearchApi{},
-	}
-
-	apiplugin.Add(apiPlugin)
-	log.Infof("init and enable plugin: %s success", apiplugin.Search)
 }
 
 func (searchApi *SearchApi) ApiRegister(router *gin.Engine, middlewares ...gin.HandlerFunc) {

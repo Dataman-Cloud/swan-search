@@ -1,10 +1,9 @@
 package search
 
 import (
+	"errors"
+	"net/http"
 	"sort"
-
-	"github.com/Dataman-Cloud/crane/src/utils/cranerror"
-	"github.com/Dataman-Cloud/crane/src/utils/httpresponse"
 
 	"github.com/gin-gonic/gin"
 	"github.com/renstrom/fuzzysearch/fuzzy"
@@ -16,29 +15,29 @@ const (
 
 const (
 	//Search
-	CodeInvalidSearchKeywords = "503-13001"
+	CodeInvalidSearchKeywords = "13001"
+	CodeOk                    = "0"
 )
 
 func (searchApi *SearchApi) Search(ctx *gin.Context) {
 	query := ctx.Query("keyword")
 	if query == "" {
-		craneError := cranerror.NewError(CodeInvalidSearchKeywords, "invalid search keywords")
-		httpresponse.Error(ctx, craneError)
+		err := errors.New("invalid keyword")
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": CodeInvalidSearchKeywords, "message": err.Error()})
 		return
 	}
-
-	//groups, ok := ctx.Get("groups")
 
 	results := []*Document{}
 	indexs := fuzzy.RankFind(query, searchApi.Index)
 	sort.Sort(indexs)
 	if len(indexs) > 0 {
 		if len(indexs) > 10 {
-			indexs = indexs[:10]
+			indexs = indexs[:RESULT_LEN]
 		}
 		for _, index := range indexs {
 			results = append(results, searchApi.Store.Get(index.Target))
 		}
 	}
-	httpresponse.Ok(ctx, results)
+	ctx.JSON(http.StatusOK, gin.H{"code": CodeOk, "data": results})
+	return
 }

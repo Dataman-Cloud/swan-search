@@ -17,6 +17,7 @@ func DefaultConfig() Config {
 		Port:   "80",
 		Scheme: "http",
 	}
+	return config
 }
 
 type Config struct {
