@@ -25,6 +25,9 @@ type Swan interface {
 	DeleteApplication(appID string) error
 	// get an applications from swan
 	GetApplication(appID string) (*Application, error)
+
+	//-- SUBSCRIPTIONS--
+	AddEventsListener(filter int) (EventsChannel, error)
 }
 
 var (
@@ -38,6 +41,13 @@ var (
 	ErrTimeoutError = errors.New("the operation has timed out")
 )
 
+// EventsChannelContext holds contextual data for an EventsChannel.
+type EventsChannelContext struct {
+	filter     int
+	done       chan struct{}
+	completion *sync.WaitGroup
+}
+
 type swanClient struct {
 	sync.RWMutex
 	// swanAddr
@@ -46,6 +56,8 @@ type swanClient struct {
 	httpClient *http.Client
 	// a custom logger for debug log messages
 	debugLog *log.Logger
+	// used for sse
+	subscribedToSSE bool
 }
 
 // NewClient creates a new swan client
