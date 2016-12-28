@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -54,6 +55,7 @@ func main() {
 }
 
 func RegisterSSEListeners(swanClients []swanclient.Swan) {
+	fmt.Println("listening event from swan...")
 	for _, client := range swanClients {
 		events, err := client.AddEventsListener(0)
 		if err != nil {
