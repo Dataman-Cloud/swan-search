@@ -3,6 +3,7 @@ package search
 import (
 	"time"
 
+	"github.com/donovanhide/eventsource"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,6 +11,8 @@ const SEARCH_LOAD_DATA_INTERVAL = 1
 
 type Indexer interface {
 	Index(prefetchStore *DocumentStorage)
+	ListenSSEService()
+	UpdateIndexer(event *eventsource.Event)
 }
 
 type DocumentStorage struct {
@@ -47,6 +50,13 @@ func (storage *DocumentStorage) Set(key string, doc Document) {
 func (storage *DocumentStorage) Get(key string) *Document {
 	doc := storage.Store[key]
 	return &doc
+}
+
+func (storage *DocumentStorage) Unset(key string) {
+	_, ok := storage.Store[key]
+	if ok {
+		delete(storage.Store, key)
+	}
 }
 
 type SearchApi struct {

@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/donovanhide/eventsource"
 )
 
 const (
@@ -61,4 +63,36 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 			log.Warnf("get applications error:", err)
 		}
 	}
+}
+
+func (indexer *SwanIndexer) ListenSSEService() {
+	fmt.Println("listening event from swan...")
+	for _, client := range indexer.SwanClients {
+		events, err := client.AddEventsListener()
+		if err != nil {
+			log.Fatalf("Failed to register for events, %s", err)
+		}
+
+		//		timer := time.After(10 * time.Second)
+		done := false
+
+		// Receive events from channel for 60 seconds
+		for {
+			if done {
+				break
+			}
+			select {
+			//	case <-timer:
+			//		log.Printf("Exiting the loop")
+			//		done = true
+			case event := <-events:
+				log.Infof("Indexer receive event: %s", event)
+				indexer.UpdateIndexer(event)
+			}
+		}
+	}
+}
+
+func (indexer *SwanIndexer) UpdateIndexer(event *eventsource.Event) {
+	fmt.Printf("start handle event:%s\n", event)
 }

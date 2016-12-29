@@ -27,7 +27,7 @@ type Swan interface {
 	GetApplication(appID string) (*Application, error)
 
 	//-- SUBSCRIPTIONS--
-	AddEventsListener(filter int) (EventsChannel, error)
+	AddEventsListener() (EventsChannel, error)
 }
 
 var (
@@ -40,13 +40,6 @@ var (
 	// ErrTimeoutError is thrown when the operation has timed out
 	ErrTimeoutError = errors.New("the operation has timed out")
 )
-
-// EventsChannelContext holds contextual data for an EventsChannel.
-type EventsChannelContext struct {
-	filter     int
-	done       chan struct{}
-	completion *sync.WaitGroup
-}
 
 type swanClient struct {
 	sync.RWMutex

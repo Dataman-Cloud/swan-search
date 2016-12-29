@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/Dataman-Cloud/swan-search/src/config"
 	"github.com/Dataman-Cloud/swan-search/src/search"
@@ -37,9 +35,9 @@ func main() {
 		}
 		swanClients = append(swanClients, swanClient)
 	}
-	go RegisterSSEListeners(swanClients)
 	searchApi.Indexer = search.NewSwanIndex(swanClients)
 	searchApi.ApiRegister(router)
+	go searchApi.Indexer.ListenSSEService()
 
 	searchAddr := searchConfig.Ip + ":" + searchConfig.Port
 	server := &http.Server{
@@ -52,32 +50,4 @@ func main() {
 		log.Fatal("can't start server: ", err)
 	}
 
-}
-
-func RegisterSSEListeners(swanClients []swanclient.Swan) {
-	fmt.Println("listening event from swan...")
-	for _, client := range swanClients {
-		events, err := client.AddEventsListener(0)
-		if err != nil {
-			log.Fatalf("Failed to register for events, %s", err)
-		}
-
-		timer := time.After(60 * time.Second)
-		done := false
-
-		// Receive events from channel for 60 seconds
-		for {
-			if done {
-				break
-			}
-			select {
-			case <-timer:
-				log.Printf("Exiting the loop")
-				done = true
-			case event := <-events:
-				log.Printf("Received event: %s", event)
-			}
-		}
-
-	}
 }
