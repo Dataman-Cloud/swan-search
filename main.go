@@ -5,6 +5,7 @@ import (
 
 	"github.com/Dataman-Cloud/swan-search/src/config"
 	"github.com/Dataman-Cloud/swan-search/src/search"
+
 	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
@@ -37,7 +38,6 @@ func main() {
 	}
 	searchApi.Indexer = search.NewSwanIndex(swanClients)
 	searchApi.ApiRegister(router)
-	go searchApi.Indexer.ListenSSEService()
 
 	searchAddr := searchConfig.Ip + ":" + searchConfig.Port
 	server := &http.Server{

@@ -1,9 +1,10 @@
 package search
 
 import (
-	"time"
+	"fmt"
 
-	"github.com/donovanhide/eventsource"
+	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,8 +12,6 @@ const SEARCH_LOAD_DATA_INTERVAL = 1
 
 type Indexer interface {
 	Index(prefetchStore *DocumentStorage)
-	ListenSSEService()
-	UpdateIndexer(event *eventsource.Event)
 }
 
 type DocumentStorage struct {
@@ -64,7 +63,7 @@ type SearchApi struct {
 	Store         *DocumentStorage
 	PrefetchStore *DocumentStorage
 
-	Indexer Indexer
+	Indexer *SwanIndexer
 }
 
 type Document struct {
@@ -77,6 +76,7 @@ type Document struct {
 
 func (searchApi *SearchApi) ApiRegister(router *gin.Engine, middlewares ...gin.HandlerFunc) {
 	searchApi.IndexData()
+	go searchApi.ListenSSEService()
 
 	searchV1 := router.Group("/search/v1", middlewares...)
 	{
@@ -85,24 +85,44 @@ func (searchApi *SearchApi) ApiRegister(router *gin.Engine, middlewares ...gin.H
 }
 
 func (searchApi *SearchApi) IndexData() {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				searchApi.IndexData()
-			}
-		}()
-
-		searchApi.PrefetchStore = NewDocumentStorage()
-		searchApi.Store = NewDocumentStorage()
-
-		for {
-			searchApi.PrefetchStore = NewDocumentStorage()
-			searchApi.Indexer.Index(searchApi.PrefetchStore)
-
-			searchApi.Index = searchApi.PrefetchStore.Indices()
-			searchApi.Store = searchApi.PrefetchStore.Copy()
-
-			time.Sleep(time.Minute * time.Duration(SEARCH_LOAD_DATA_INTERVAL))
+	log.Infof("Init index data...")
+	searchApi.PrefetchStore = NewDocumentStorage()
+	searchApi.Store = NewDocumentStorage()
+	searchApi.Indexer.Index(searchApi.PrefetchStore)
+	searchApi.Index = searchApi.PrefetchStore.Indices()
+	searchApi.Store = searchApi.PrefetchStore.Copy()
+}
+func (searchApi *SearchApi) ListenSSEService() {
+	log.Infof("listening event from swan...")
+	defer func() {
+		if err := recover(); err != nil {
+			searchApi.ListenSSEService()
 		}
 	}()
+	for _, client := range searchApi.Indexer.SwanClients {
+		events, err := client.AddEventsListener()
+		//TODO(zliu): reconnect when err
+		if err != nil {
+			log.Errorf("Failed to register for events, %s", err)
+		}
+		for {
+			select {
+			case event := <-events:
+				log.Infof("Indexer receive event: %s", event)
+				searchApi.UpdateIndexer(event)
+			}
+		}
+	}
+}
+
+func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
+	fmt.Printf("Event:%+v\n", event)
+	switch event.Event {
+	case "task_rm":
+		data := event.Data.(*swanclient.TaskInfo)
+		searchApi.PrefetchStore.Unset(data.TaskId)
+		fmt.Printf("unset task :%s", data.TaskId)
+	}
+	searchApi.Index = searchApi.PrefetchStore.Indices()
+	searchApi.Store = searchApi.PrefetchStore.Copy()
 }
