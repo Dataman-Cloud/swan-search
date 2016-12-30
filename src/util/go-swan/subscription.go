@@ -25,7 +25,12 @@ func (r *swanClient) AddEventsListener() (EventsChannel, error) {
 func (r *swanClient) registerSSESubscription(channel EventsChannel) error {
 	// Prevent multiple SSE subscriptions
 
-	request, err := r.apiRequest("GET", fmt.Sprintf("%s/%s", r.swanAddr, defaultEventsURL), nil)
+	url, err := r.hosts.getMember()
+	if err != nil {
+		return err
+	}
+
+	request, err := r.apiRequest("GET", fmt.Sprintf("%s/%s", url, defaultEventsURL), nil)
 	if err != nil {
 		return err
 	}
