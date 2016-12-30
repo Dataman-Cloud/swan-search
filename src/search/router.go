@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"time"
 
 	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
 	log "github.com/Sirupsen/logrus"
@@ -76,7 +77,9 @@ type Document struct {
 
 func (searchApi *SearchApi) ApiRegister(router *gin.Engine, middlewares ...gin.HandlerFunc) {
 	searchApi.IndexData()
-	go searchApi.ListenSSEService()
+	for _, client := range searchApi.Indexer.SwanClients {
+		go searchApi.ListenSSEService(client)
+	}
 
 	searchV1 := router.Group("/search/v1", middlewares...)
 	{
@@ -92,26 +95,25 @@ func (searchApi *SearchApi) IndexData() {
 	searchApi.Index = searchApi.PrefetchStore.Indices()
 	searchApi.Store = searchApi.PrefetchStore.Copy()
 }
-func (searchApi *SearchApi) ListenSSEService() {
-	log.Infof("listening event from swan...")
-	defer func() {
-		if err := recover(); err != nil {
-			searchApi.ListenSSEService()
-		}
-	}()
-	for _, client := range searchApi.Indexer.SwanClients {
+func (searchApi *SearchApi) ListenSSEService(client swanclient.Swan) {
+	for {
+		defer func() {
+			if err := recover(); err != nil {
+				searchApi.ListenSSEService(client)
+			}
+		}()
+		log.Infof("start listening events")
 		events, err := client.AddEventsListener()
-		//TODO(zliu): reconnect when err
 		if err != nil {
 			log.Errorf("Failed to register for events, %s", err)
+			continue
 		}
-		for {
-			select {
-			case event := <-events:
-				log.Infof("Indexer receive event: %s", event)
-				searchApi.UpdateIndexer(event)
-			}
+		select {
+		case event := <-events:
+			log.Infof("Indexer receive event: %s", event)
+			searchApi.UpdateIndexer(event)
 		}
+		<-time.After(time.Duration(5 * time.Second))
 	}
 }
 
