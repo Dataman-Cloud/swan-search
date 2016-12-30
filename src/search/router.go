@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
@@ -48,7 +49,10 @@ func (storage *DocumentStorage) Set(key string, doc Document) {
 }
 
 func (storage *DocumentStorage) Get(key string) *Document {
-	doc := storage.Store[key]
+	doc, ok := storage.Store[key]
+	if !ok {
+		return nil
+	}
 	return &doc
 }
 
@@ -102,10 +106,12 @@ func (searchApi *SearchApi) ListenSSEService(client swanclient.Swan) {
 				searchApi.ListenSSEService(client)
 			}
 		}()
+
 		log.Infof("start listening events")
 		events, err := client.AddEventsListener()
 		if err != nil {
 			log.Errorf("Failed to register for events, %s", err)
+			time.Sleep(time.Duration(5 * time.Second))
 			continue
 		}
 		select {
@@ -113,7 +119,6 @@ func (searchApi *SearchApi) ListenSSEService(client swanclient.Swan) {
 			log.Infof("Indexer receive event: %s", event)
 			searchApi.UpdateIndexer(event)
 		}
-		<-time.After(time.Duration(5 * time.Second))
 	}
 }
 
@@ -123,7 +128,24 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 	case "task_rm":
 		data := event.Data.(*swanclient.TaskInfo)
 		searchApi.PrefetchStore.Unset(data.TaskId)
-		fmt.Printf("unset task :%s", data.TaskId)
+		fmt.Printf("delete task :%s", data.TaskId)
+	case "task_add":
+		data := event.Data.(*swanclient.TaskInfo)
+		doc := searchApi.PrefetchStore.Get(data.TaskId)
+		if doc == nil {
+			taskNum := strings.Split(data.TaskId, "-")[0]
+			appId := strings.Split(data.TaskId, "-")[1]
+			searchApi.PrefetchStore.Set(data.TaskId, Document{
+				ID:   data.TaskId,
+				Name: data.TaskId,
+				Type: DOCUMENT_TASK,
+				Param: map[string]string{
+					"AppId":  appId,
+					"TaskId": taskNum,
+				},
+			})
+			fmt.Printf("add task:%s", data.TaskId)
+		}
 	}
 	searchApi.Index = searchApi.PrefetchStore.Indices()
 	searchApi.Store = searchApi.PrefetchStore.Copy()
