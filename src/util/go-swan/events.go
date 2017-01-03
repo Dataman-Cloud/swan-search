@@ -33,6 +33,10 @@ func GetEvent(eventType string) (*Event, error) {
 		event.Data = new(TaskInfo)
 	case "task_add":
 		event.Data = new(TaskInfo)
+	case "app_add":
+		event.Data = new(Application)
+	case "app_rm":
+		event.Data = new(Application)
 	default:
 		return nil, errors.New(fmt.Sprintf("no event is found for eventType:%s", eventType))
 	}

@@ -146,6 +146,26 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 			})
 			fmt.Printf("add task:%s", data.TaskId)
 		}
+	case "app_add":
+		data := event.Data.(*swanclient.Application)
+		fmt.Println("application:%s", data)
+		doc := searchApi.PrefetchStore.Get(data.ID)
+		if doc == nil {
+			searchApi.PrefetchStore.Set(data.ID, Document{
+				ID:   data.ID,
+				Name: data.Name,
+				Type: DOCUMENT_APP,
+				Param: map[string]string{
+					"AppId": data.ID,
+				},
+			})
+			fmt.Printf("add app:%s", data.ID)
+		}
+	case "app_rm":
+		data := event.Data.(*swanclient.Application)
+		searchApi.PrefetchStore.Unset(data.ID)
+		fmt.Printf("delete app:%s", data.ID)
+
 	}
 	searchApi.Index = searchApi.PrefetchStore.Indices()
 	searchApi.Store = searchApi.PrefetchStore.Copy()
