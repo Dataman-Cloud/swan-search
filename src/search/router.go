@@ -126,11 +126,11 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 	fmt.Printf("Event:%+v\n", event)
 	switch event.Event {
 	case "task_rm":
-		data := event.Data.(*swanclient.TaskInfo)
+		data := event.Data.(*swanclient.TaskInfoEvent)
 		searchApi.PrefetchStore.Unset(data.TaskId)
 		fmt.Printf("delete task :%s", data.TaskId)
 	case "task_add":
-		data := event.Data.(*swanclient.TaskInfo)
+		data := event.Data.(*swanclient.TaskInfoEvent)
 		doc := searchApi.PrefetchStore.Get(data.TaskId)
 		if doc == nil {
 			taskNum := strings.Split(data.TaskId, "-")[0]
@@ -146,8 +146,8 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 			})
 			fmt.Printf("add task:%s", data.TaskId)
 		}
-	case "app_add":
-		data := event.Data.(*swanclient.Application)
+	case "app_state_creating":
+		data := event.Data.(*swanclient.AppInfoEvent)
 		fmt.Println("application:%s", data)
 		doc := searchApi.PrefetchStore.Get(data.ID)
 		if doc == nil {
@@ -161,8 +161,8 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 			})
 			fmt.Printf("add app:%s", data.ID)
 		}
-	case "app_rm":
-		data := event.Data.(*swanclient.Application)
+	case "app_state_deletion":
+		data := event.Data.(*swanclient.AppInfoEvent)
 		searchApi.PrefetchStore.Unset(data.ID)
 		fmt.Printf("delete app:%s", data.ID)
 
