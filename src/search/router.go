@@ -72,7 +72,7 @@ type SearchApi struct {
 }
 
 type Document struct {
-	AppId   string
+	ID      string
 	Name    string
 	Type    string
 	GroupId uint64 `json:"-"`
@@ -143,7 +143,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 					"TaskId": taskNum,
 				},
 			})
-			fmt.Printf("add task:%s", data.TaskId)
+			fmt.Printf("add task:%s\n", data.TaskId)
 		}
 	case swanclient.EventTypeAppStateCreating:
 		data := event.Data.(*swanclient.AppInfoEvent)
@@ -157,12 +157,12 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 					"AppId": data.AppId,
 				},
 			})
-			fmt.Printf("add app:%s", data.AppId)
+			fmt.Printf("add app:%s\n", data.AppId)
 		}
 	case swanclient.EventTypeAppStateDeletion:
 		data := event.Data.(*swanclient.AppInfoEvent)
 		searchApi.PrefetchStore.Unset(data.AppId)
-		fmt.Printf("delete app:%s", data.AppId)
+		fmt.Printf("delete app:%s\n", data.AppId)
 
 	}
 	searchApi.Index = searchApi.PrefetchStore.Indices()
