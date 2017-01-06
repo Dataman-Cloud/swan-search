@@ -127,7 +127,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 	case swanclient.EventTypeTaskStateFinished:
 		data := event.Data.(*swanclient.TaskInfoEvent)
 		searchApi.PrefetchStore.Unset(data.TaskId)
-		fmt.Printf("delete task :%s", data.TaskId)
+		fmt.Printf("delete task :%s\n", data.TaskId)
 	case swanclient.EventTypeTaskStatePendingOffer:
 		data := event.Data.(*swanclient.TaskInfoEvent)
 		doc := searchApi.PrefetchStore.Get(data.TaskId)
