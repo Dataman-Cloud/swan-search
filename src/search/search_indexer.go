@@ -30,7 +30,7 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 		var filter map[string][]string
 		if apps, err := swanClient.Applications(filter); err == nil {
 			for _, app := range apps {
-				store.Set(app.ID+app.Name, Document{
+				store.Set(app.ID, Document{
 					ID:   app.ID,
 					Name: app.Name,
 					Type: DOCUMENT_APP,

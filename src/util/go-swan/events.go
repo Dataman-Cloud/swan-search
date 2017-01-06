@@ -24,7 +24,7 @@ type TaskInfoEvent struct {
 }
 
 type AppInfoEvent struct {
-	ID    string
+	AppId string
 	Name  string
 	State string
 }

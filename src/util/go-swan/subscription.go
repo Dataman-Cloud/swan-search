@@ -46,11 +46,6 @@ func (r *swanClient) registerSSESubscription(channel EventsChannel) error {
 		for {
 			select {
 			case ev := <-stream.Events:
-				//if err := r.handleEvent(ev.Id(), ev.Event(), ev.Data()); err != nil {
-				//	// TODO let the user handle this error instead of logging it here
-				//r.debugLog.Printf("registerSSESubscription(): failed to handle event: %v\n", err)
-				//fmt.Printf("registerSSESubscription(): failed to handle event: %v\n", err)
-				//}
 				event, err := GetEvent(ev.Event())
 				if err != nil {
 					fmt.Errorf("failed to handle event:%s", err)
@@ -65,8 +60,6 @@ func (r *swanClient) registerSSESubscription(channel EventsChannel) error {
 				}
 				channel <- event
 			case err := <-stream.Errors:
-				// TODO let the user handle this error instead of logging it here
-				//r.debugLog.Printf("registerSSESubscription(): failed to receive event: %v\n", err)
 				fmt.Errorf("registerSSESubscription(): failed to receive event: %s", err)
 				continue
 			}
