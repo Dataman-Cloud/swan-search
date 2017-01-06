@@ -72,7 +72,7 @@ type SearchApi struct {
 }
 
 type Document struct {
-	ID      string
+	AppId   string
 	Name    string
 	Type    string
 	GroupId uint64 `json:"-"`
@@ -123,13 +123,12 @@ func (searchApi *SearchApi) ListenSSEService(client swanclient.Swan) {
 }
 
 func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
-	fmt.Printf("Event:%+v\n", event)
 	switch event.Event {
-	case "task_rm":
+	case swanclient.EventTypeTaskStateFinished:
 		data := event.Data.(*swanclient.TaskInfoEvent)
 		searchApi.PrefetchStore.Unset(data.TaskId)
 		fmt.Printf("delete task :%s", data.TaskId)
-	case "task_add":
+	case swanclient.EventTypeTaskStatePendingOffer:
 		data := event.Data.(*swanclient.TaskInfoEvent)
 		doc := searchApi.PrefetchStore.Get(data.TaskId)
 		if doc == nil {
@@ -146,25 +145,24 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 			})
 			fmt.Printf("add task:%s", data.TaskId)
 		}
-	case "app_state_creating":
+	case swanclient.EventTypeAppStateCreating:
 		data := event.Data.(*swanclient.AppInfoEvent)
-		fmt.Println("application:%s", data)
-		doc := searchApi.PrefetchStore.Get(data.ID)
+		doc := searchApi.PrefetchStore.Get(data.AppId)
 		if doc == nil {
-			searchApi.PrefetchStore.Set(data.ID, Document{
-				ID:   data.ID,
+			searchApi.PrefetchStore.Set(data.AppId, Document{
+				ID:   data.AppId,
 				Name: data.Name,
 				Type: DOCUMENT_APP,
 				Param: map[string]string{
-					"AppId": data.ID,
+					"AppId": data.AppId,
 				},
 			})
-			fmt.Printf("add app:%s", data.ID)
+			fmt.Printf("add app:%s", data.AppId)
 		}
-	case "app_state_deletion":
+	case swanclient.EventTypeAppStateDeletion:
 		data := event.Data.(*swanclient.AppInfoEvent)
-		searchApi.PrefetchStore.Unset(data.ID)
-		fmt.Printf("delete app:%s", data.ID)
+		searchApi.PrefetchStore.Unset(data.AppId)
+		fmt.Printf("delete app:%s", data.AppId)
 
 	}
 	searchApi.Index = searchApi.PrefetchStore.Indices()
