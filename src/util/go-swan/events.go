@@ -87,7 +87,7 @@ func GetEvent(eventType string) (*Event, error) {
 		EventTypeAppStateScaleDown:
 		event.Data = new(AppInfoEvent)
 	default:
-		return nil, errors.New(fmt.Sprintf("no event is found for eventType:%s", eventType))
+		return nil, errors.New(fmt.Sprintf("The event type %s was not found or supported", eventType))
 	}
 	return event, nil
 }
