@@ -14,7 +14,7 @@ import (
 func main() {
 
 	// load config
-	searchConfig := config.LoadConfig("./config.json")
+	searchConfig := config.LoadConfig("./deploy/config.json")
 	router := gin.New()
 
 	searchApi := search.SearchApi{}

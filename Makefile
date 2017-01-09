@@ -58,3 +58,9 @@ test-cover-html:
 test-cover-func:
 	go tool cover -func=coverage-all.out
 
+docker-build:
+	docker build --tag swan-search --rm .
+
+docker-run:
+	docker run -v $(pwd)/deploy:/go/src/github.com/Dataman-Cloud/swan/deploy --rm -p 9888:9888 swan-search
+
