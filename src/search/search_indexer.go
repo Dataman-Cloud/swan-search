@@ -37,6 +37,7 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 					Param: map[string]string{
 						"AppId": app.ID,
 					},
+					ClusterID: app.ClusterID,
 				})
 				log.Infof("add app:%s\n", app.ID)
 				if appDetail, err := swanClient.GetApplication(app.ID); err == nil {
@@ -50,6 +51,7 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 								"AppId":  app.ID,
 								"TaskId": taskNum,
 							},
+							ClusterID: app.ClusterID,
 						})
 						log.Infof("add task:%s\n", task.ID)
 					}
