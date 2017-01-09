@@ -3,26 +3,41 @@
 swan-search is a simple search engine based on mesos framework [swan](https://github.com/Dataman-Cloud/swan)
 
 # installation
-1. get the source code first:
++ get the source code first:
 ```
 go get github.com/Dataman-Cloud/swan-search
 ```
 
-2. prepare the config file:
++ prepare the config file:
 ```
 cp deploy/config.json.template deploy/config.json
 ```
-In config.json, Fill the clusters info. One swan service is one cluster.
+In config.json, fill the clusters info. One swan service is one cluster.  
+
 In config.json.template:
-"swan1" is cluster name, "http://172.28.128.4:9999" is cluster ips.
+```
+{
+	"clusters": [
+		{
+			"swan1": "http://172.28.128.4:9999"
+		}
+	],
+	"ip": "0.0.0.0",
+	"port": "9888",
+	"scheme": "http"
+}
+```
+"swan1" is cluster name, "http://172.28.128.4:9999" is cluster addresses.
+
 swan-search supports multi-manager mode. You can register manager ips using this format:
+
 ```
 {
 	swan1: "http://172.28.128.4:9999, http://172.28.128.3:9999"
 }
 ```
 
-3. run search:
++ run search:
 ```
 # make docker-build
 # make docker-run
