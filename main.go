@@ -28,8 +28,7 @@ func main() {
 	var swanClients []swanclient.Swan
 
 	for _, swanConfig := range searchConfig.Swans {
-		swanAddr := swanConfig.Scheme + "://" + swanConfig.Ip + ":" + swanConfig.Port
-		swanClient, err := swanclient.NewClient(swanAddr)
+		swanClient, err := swanclient.NewClient(swanConfig.Urls)
 		if err != nil {
 			log.Errorf("fails to setup swan client:", err)
 			continue

@@ -7,10 +7,7 @@ func DefaultConfig() Config {
 	config := Config{
 		Swans: []Swan{
 			Swan{
-				Ip:         "172.28.128.4",
-				Port:       "9999",
-				Scheme:     "http",
-				ApiVersion: "v_beta",
+				Urls: "http://172.28.128.4:9999",
 			},
 		},
 		Ip:     ip,
@@ -28,8 +25,5 @@ type Config struct {
 }
 
 type Swan struct {
-	Ip         string
-	Port       string
-	Scheme     string
-	ApiVersion string
+	Urls string
 }
