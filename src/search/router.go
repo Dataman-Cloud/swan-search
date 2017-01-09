@@ -5,7 +5,8 @@ import (
 	"strings"
 	"time"
 
-	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
+	swanclient "github.com/Dataman-Cloud/swan/go-swan"
+	swanevent "github.com/Dataman-Cloud/swan/src/event"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 )
@@ -125,11 +126,11 @@ func (searchApi *SearchApi) ListenSSEService(client swanclient.Swan) {
 func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 	switch event.Event {
 	case swanclient.EventTypeTaskStateFinished:
-		data := event.Data.(*swanclient.TaskInfoEvent)
+		data := event.Data.(*swanevent.TaskInfoEvent)
 		searchApi.PrefetchStore.Unset(data.TaskId)
 		fmt.Printf("delete task :%s\n", data.TaskId)
 	case swanclient.EventTypeTaskStatePendingOffer:
-		data := event.Data.(*swanclient.TaskInfoEvent)
+		data := event.Data.(*swanevent.TaskInfoEvent)
 		doc := searchApi.PrefetchStore.Get(data.TaskId)
 		if doc == nil {
 			taskNum := strings.Split(data.TaskId, "-")[0]
@@ -146,7 +147,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 			fmt.Printf("add task:%s\n", data.TaskId)
 		}
 	case swanclient.EventTypeAppStateCreating:
-		data := event.Data.(*swanclient.AppInfoEvent)
+		data := event.Data.(*swanevent.AppInfoEvent)
 		doc := searchApi.PrefetchStore.Get(data.AppId)
 		if doc == nil {
 			searchApi.PrefetchStore.Set(data.AppId, Document{
@@ -160,7 +161,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 			fmt.Printf("add app:%s\n", data.AppId)
 		}
 	case swanclient.EventTypeAppStateDeletion:
-		data := event.Data.(*swanclient.AppInfoEvent)
+		data := event.Data.(*swanevent.AppInfoEvent)
 		searchApi.PrefetchStore.Unset(data.AppId)
 		fmt.Printf("delete app:%s\n", data.AppId)
 

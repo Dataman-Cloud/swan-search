@@ -6,7 +6,7 @@ import (
 	"github.com/Dataman-Cloud/swan-search/src/config"
 	"github.com/Dataman-Cloud/swan-search/src/search"
 
-	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
+	swanclient "github.com/Dataman-Cloud/swan/go-swan"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 )

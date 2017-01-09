@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	swanclient "github.com/Dataman-Cloud/swan-search/src/util/go-swan"
+	swanclient "github.com/Dataman-Cloud/swan/go-swan"
 
 	log "github.com/Sirupsen/logrus"
 )

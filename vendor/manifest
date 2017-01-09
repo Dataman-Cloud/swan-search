@@ -2,6 +2,14 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/Dataman-Cloud/swan",
+			"repository": "https://github.com/Dataman-Cloud/swan",
+			"vcs": "git",
+			"revision": "e37b8e2eac043e7d31a87ab9ddb1fdacb8f5c9ac",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
 			"vcs": "git",
@@ -42,6 +50,14 @@
 			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
 			"branch": "master",
 			"path": "ptypes",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mjibson/appstats",
+			"repository": "https://github.com/mjibson/appstats",
+			"vcs": "git",
+			"revision": "0542d5f0e87ea3a8fa4174322b9532f5d04f9fa8",
+			"branch": "master",
 			"notests": true
 		},
 		{
