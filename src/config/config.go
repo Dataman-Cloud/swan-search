@@ -1,29 +1,30 @@
 package config
 
-import "net"
+import (
+	"encoding/json"
+	"io/ioutil"
 
-func DefaultConfig() Config {
-	ip := net.ParseIP("0.0.0.0").String()
-	config := Config{
-		Swans: []Swan{
-			Swan{
-				Urls: "http://172.28.128.4:9999",
-			},
-		},
-		Ip:     ip,
-		Port:   "80",
-		Scheme: "http",
-	}
-	return config
-}
+	log "github.com/Sirupsen/logrus"
+)
 
 type Config struct {
-	Swans  []Swan
-	Ip     string
-	Port   string
-	Scheme string
+	Clusters []map[string]string `json: "clusters"`
+	Ip       string              `json: "ip"`
+	Port     string              `json: "port"`
+	Scheme   string              `json:"scheme"`
 }
 
-type Swan struct {
-	Urls string
+func LoadConfig(configFile string) Config {
+	var searchConfig Config
+	log.Debugf("configfile: ", configFile)
+	config, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		log.Errorf("Failed to read config file %s: %s", configFile, err.Error())
+		return searchConfig
+	}
+	err = json.Unmarshal(config, &searchConfig)
+	if err != nil {
+		log.Errorf("Failed to unmarshal configs from configFile %s:%s", configFile, err.Error())
+	}
+	return searchConfig
 }

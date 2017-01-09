@@ -11,29 +11,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoadConfig() config.Config {
-	return config.DefaultConfig()
-}
-
 func main() {
 
 	// load config
-	searchConfig := LoadConfig()
-	searchConfig.Ip = "172.28.128.4"
-	searchConfig.Port = "9888"
+	searchConfig := config.LoadConfig("./config.json")
 	router := gin.New()
 
 	searchApi := search.SearchApi{}
 
 	var swanClients []swanclient.Swan
 
-	for _, swanConfig := range searchConfig.Swans {
-		swanClient, err := swanclient.NewClient(swanConfig.Urls)
-		if err != nil {
-			log.Errorf("fails to setup swan client:", err)
-			continue
+	for _, cluster := range searchConfig.Clusters {
+		for cName, cAddrs := range cluster {
+			swanClient, err := swanclient.NewClient(cAddrs)
+			if err != nil {
+				log.Errorf("fails to setup cluster client:%s", cName)
+				continue
+			}
+			swanClients = append(swanClients, swanClient)
 		}
-		swanClients = append(swanClients, swanClient)
 	}
 	searchApi.Indexer = search.NewSwanIndex(swanClients)
 	searchApi.ApiRegister(router)
