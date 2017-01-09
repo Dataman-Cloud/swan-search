@@ -73,11 +73,12 @@ type SearchApi struct {
 }
 
 type Document struct {
-	ID      string
-	Name    string
-	Type    string
-	GroupId uint64 `json:"-"`
-	Param   map[string]string
+	ID        string
+	Name      string
+	Type      string
+	GroupId   uint64 `json:"-"`
+	Param     map[string]string
+	ClusterID string
 }
 
 func (searchApi *SearchApi) ApiRegister(router *gin.Engine, middlewares ...gin.HandlerFunc) {
@@ -143,7 +144,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 					"AppId":  appId,
 					"TaskId": taskNum,
 				},
-				Cluster: data.ClusterID,
+				ClusterID: data.ClusterID,
 			})
 			fmt.Printf("add task:%s\n", data.TaskId)
 		}
@@ -158,7 +159,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 				Param: map[string]string{
 					"AppId": data.AppId,
 				},
-				Cluster: data.ClusterID,
+				ClusterID: data.ClusterID,
 			})
 			fmt.Printf("add app:%s\n", data.AppId)
 		}
