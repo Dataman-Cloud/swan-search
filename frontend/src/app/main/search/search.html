@@ -1,0 +1,45 @@
+<header class="page-header md-display-2">多集群</header>
+<div layout="row">
+  <section class="multicluster-search">
+    <md-input-container md-no-float layout="row">
+
+      <div>
+        <input type="text" placeholder="关键字">
+      </div>
+      <md-button class="md-icon-button" aria-label="Search" ng-click="vm.searchClusters()">
+        <i class="fa fa-search"></i>
+      </md-button>
+
+    </md-input-container>
+    <ul>
+      <li ng-repeat="cluster in vm.clusters track by $index"><a href="#">集群名</a></li>
+    </ul>
+  </section>
+
+  <section flex class="multicluster-result">
+    <ul ng-show="vm.apps.length">
+      <li ng-repeat="app in vm.apps track by $index">
+        <h3><a href="#">2048.user.bj</a></h3>
+        <div class="list-dl-h" layout="column">
+          <dl layout="row">
+            <dt>访问地址</dt>
+            <dd><a href="#">http://2048.mygroup.bj</a></dd>
+          </dl>
+          <dl layout="row">
+            <dt>CPU
+              <small>申请/占用</small>
+            </dt>
+            <dd>0.3/0.1 <a href="#"><i class="fa fa-line-chart"></i></a></dd>
+          </dl>
+          <dl layout="row">
+            <dt>内存
+              <small>申请/占用</small>
+            </dt>
+            <dd>150M/1000M <a href="#"><i class="fa fa-line-chart"></i></a></dd>
+          </dl>
+        </div>
+      </li>
+    </ul>
+    <div ng-hide="vm.apps.length">暂无应用</div>
+  </section>
+</div>
