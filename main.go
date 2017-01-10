@@ -9,6 +9,7 @@ import (
 	swanclient "github.com/Dataman-Cloud/swan/go-swan"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
 )
 
 func main() {
@@ -16,6 +17,9 @@ func main() {
 	// load config
 	searchConfig := config.LoadConfig("./deploy/config.json")
 	router := gin.New()
+	router.Use(cors.Middleware(cors.Config{
+		Origins: "*",
+	}))
 
 	searchApi := search.SearchApi{}
 
