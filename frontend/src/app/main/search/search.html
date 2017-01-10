@@ -19,23 +19,29 @@
   <section flex class="multicluster-result">
     <ul ng-show="vm.apps.length">
       <li ng-repeat="app in vm.apps track by $index">
-        <h3><a href="#">2048.user.bj</a></h3>
+        <h3><a
+          ng-href="{/vm.swanBase/}/app{/'?cluster=' + app.Param.ClusterId + '&user=' + app.Param.RunAs + '&app=' + app.Param.AppId/}"
+          target="_blank">{/app.ID/}</a></h3>
         <div class="list-dl-h" layout="column">
           <dl layout="row">
             <dt>访问地址</dt>
-            <dd><a href="#">http://2048.mygroup.bj</a></dd>
+            <dd><a href="#">???</a></dd>
           </dl>
           <dl layout="row">
             <dt>CPU
               <small>申请/占用</small>
             </dt>
-            <dd>0.3/0.1 <a href="#"><i class="fa fa-line-chart"></i></a></dd>
+            <dd>???/??? <a
+              ng-href="{/vm.monitorBase/}{/'?clusterid=' + app.Param.ClusterId + '&userid=' + app.Param.RunAs + '&appid=' + app.Param.AppId + '&start=' + vm.start + '&end=' + vm.end + '&metric=cpu'/}"
+              target="_blank"><i class="fa fa-line-chart"></i></a></dd>
           </dl>
           <dl layout="row">
             <dt>内存
               <small>申请/占用</small>
             </dt>
-            <dd>150M/1000M <a href="#"><i class="fa fa-line-chart"></i></a></dd>
+            <dd>???/??? <a
+              ng-href="{/vm.monitorBase/}{/'?clusterid=' + app.Param.ClusterId + '&userid=' + app.Param.RunAs + '&appid=' + app.Param.AppId + '&start=' + vm.start + '&end=' + vm.end + '&metric=memory'/}"
+              target="_blank"><i class="fa fa-line-chart"></i></a></dd>
           </dl>
         </div>
       </li>

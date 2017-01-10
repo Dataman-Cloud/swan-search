@@ -12,7 +12,9 @@ angular.module('frontend', ['ngAnimate', 'ngCookies', 'ngSanitize', 'ngMessages'
   'ui-notification', 'angular-loading-bar'])
   .constant('moment', moment)
   .constant('BACKEND_URL_BASE', {
-    defaultBase: "http://192.168.1.155:9888"
+    defaultBase: "http://192.168.1.155:9888",
+    swanBase: "http://192.168.1.155:3000",
+    monitorBase: "http://192.168.1.75:5098/ui/monitor/chart"
   })
   .config(config)
   .config(routerConfig)
