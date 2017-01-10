@@ -11,6 +11,9 @@ import { searchBackend } from '../app/main/search/service/search-backend.service
 angular.module('frontend', ['ngAnimate', 'ngCookies', 'ngSanitize', 'ngMessages', 'ngAria', 'ngResource', 'ui.router', 'ngMaterial',
   'ui-notification', 'angular-loading-bar'])
   .constant('moment', moment)
+  .constant('BACKEND_URL_BASE', {
+    defaultBase: "http://192.168.1.155:9888"
+  })
   .config(config)
   .config(routerConfig)
   .run(runBlock)

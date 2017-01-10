@@ -6,6 +6,7 @@ export class SearchController {
     'ngInject';
 
     this.searchBackend = searchBackend;
+    this.keyword = '';
     this.clusters = [1, 2, 3];
     this.apps = [1, 2, 3, 4, 5];
     this.activate();
@@ -17,11 +18,10 @@ export class SearchController {
 
 
   searchClusters() {
-    this.clusters = [];
     this.apps = [];
 
     //TODO GET CLUSTER AJAX
-    this.searchBackend.cluster().get(data => {
+    this.searchBackend.searchApps(this.keyword).get(data => {
 
     })
   }
