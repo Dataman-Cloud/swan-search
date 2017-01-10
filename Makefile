@@ -64,3 +64,6 @@ docker-build:
 docker-run:
 	docker run -v $(pwd)/deploy:/go/src/github.com/Dataman-Cloud/swan/deploy --rm -p 9888:9888 swan-search
 
+docker-run-as-deamon:
+	docker run -v $(pwd)/deploy:/go/src/github.com/Dataman-Cloud/swan/deploy -p 9888:9888 --name swan-search -d swan-search
+
