@@ -78,7 +78,7 @@ type Document struct {
 	Type      string
 	GroupId   uint64 `json:"-"`
 	Param     map[string]string
-	ClusterID string
+	ClusterId string
 }
 
 func (searchApi *SearchApi) ApiRegister(router *gin.Engine, middlewares ...gin.HandlerFunc) {
@@ -141,10 +141,12 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 				Name: data.TaskId,
 				Type: DOCUMENT_TASK,
 				Param: map[string]string{
-					"AppId":  appId,
-					"TaskId": taskNum,
+					"AppId":     appId,
+					"TaskId":    taskNum,
+					"ClusterId": data.ClusterId,
+					"RunAs":     data.RunAs,
 				},
-				ClusterID: data.ClusterID,
+				ClusterId: data.ClusterId,
 			})
 			fmt.Printf("add task:%s\n", data.TaskId)
 		}
@@ -157,9 +159,11 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 				Name: data.Name,
 				Type: DOCUMENT_APP,
 				Param: map[string]string{
-					"AppId": data.AppId,
+					"AppId":     data.AppId,
+					"ClusterId": data.ClusterId,
+					"RunAs":     data.RunAs,
 				},
-				ClusterID: data.ClusterID,
+				ClusterId: data.ClusterId,
 			})
 			fmt.Printf("add app:%s\n", data.AppId)
 		}
