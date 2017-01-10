@@ -1,4 +1,7 @@
-export function runBlock ($log) {
+export function runBlock ($rootScope, $state, $stateParams) {
   'ngInject';
-  $log.debug('runBlock end');
+
+  $rootScope.$state = $state;
+  $rootScope.$stateParams = $stateParams;
+  $rootScope.keys = Object.keys;
 }

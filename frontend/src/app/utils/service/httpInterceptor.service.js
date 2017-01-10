@@ -1,6 +1,4 @@
-import {BACKEND_URL_BASE} from '../../conf'
-
-export function httpInterceptor($q, $injector) {
+export function httpInterceptor($q, $injector, BACKEND_URL_BASE) {
   'ngInject';
 
   let notification = null;
