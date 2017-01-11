@@ -51,7 +51,7 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 							Type: DOCUMENT_TASK,
 							Param: map[string]string{
 								"AppId":     app.ID,
-								"TaskId":    taskNum,
+								"TaskIndex": taskNum,
 								"ClusterId": app.ClusterID,
 								"RunAs":     app.RunAs,
 							},

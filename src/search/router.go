@@ -142,7 +142,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 				Type: DOCUMENT_TASK,
 				Param: map[string]string{
 					"AppId":     appId,
-					"TaskId":    taskNum,
+					"TaskIndex": taskNum,
 					"ClusterId": data.ClusterId,
 					"RunAs":     data.RunAs,
 				},
