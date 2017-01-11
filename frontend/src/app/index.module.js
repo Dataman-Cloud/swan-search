@@ -14,7 +14,8 @@ angular.module('frontend', ['ngAnimate', 'ngCookies', 'ngSanitize', 'ngMessages'
   .constant('BACKEND_URL_BASE', {
     defaultBase: "http://192.168.1.155:9888",
     swanBase: "http://192.168.1.155:3000",
-    monitorBase: "http://192.168.1.75:5098/ui/monitor/chart"
+    monitorBase: "http://192.168.1.75:5098/ui/monitor/chart",
+    appDomain: "123"
   })
   .config(config)
   .config(routerConfig)
