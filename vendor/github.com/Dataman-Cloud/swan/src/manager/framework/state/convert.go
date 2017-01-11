@@ -31,6 +31,7 @@ func VersionToRaft(version *types.Version) *rafttypes.Version {
 	raftVersion := &rafttypes.Version{
 		ID:          version.ID,
 		Command:     version.Command,
+		Args:        version.Args,
 		Cpus:        version.CPUs,
 		Mem:         version.Mem,
 		Disk:        version.Disk,
@@ -74,6 +75,7 @@ func VersionFromRaft(raftVersion *rafttypes.Version) *types.Version {
 		ID:          raftVersion.ID,
 		AppID:       raftVersion.AppID,
 		Command:     raftVersion.Command,
+		Args:        raftVersion.Args,
 		CPUs:        raftVersion.Cpus,
 		Mem:         raftVersion.Mem,
 		Disk:        raftVersion.Disk,
@@ -203,7 +205,7 @@ func DockerFromRaft(raftDocker *rafttypes.Docker) *types.Docker {
 		docker.Parameters = parameters
 	}
 
-	if docker.PortMappings != nil {
+	if raftDocker.PortMappings != nil {
 		var portMappings []*types.PortMapping
 		for _, portMapping := range raftDocker.PortMappings {
 			portMappings = append(portMappings, PortMappingFromRaft(portMapping))

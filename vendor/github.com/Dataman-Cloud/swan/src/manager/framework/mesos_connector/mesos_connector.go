@@ -137,10 +137,14 @@ func CreateFrameworkInfo() *mesos.FrameworkInfo {
 	return fw
 }
 
-func getMastersFromZK(zkUrl string) ([]string, error) {
+func getMastersFromZK(zkPath string) ([]string, error) {
 	masterInfo := new(mesos.MasterInfo)
 
-	url, err := url.Parse(zkUrl)
+	connUrl := zkPath
+	if !strings.HasPrefix(connUrl, "zk://") {
+		connUrl = fmt.Sprintf("zk://%s", zkPath)
+	}
+	url, err := url.Parse(connUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +202,7 @@ func (s *MesosConnector) addEvent(eventType sched.Event_Type, e *sched.Event) {
 
 func (s *MesosConnector) Start(ctx context.Context, mesosFailureChan chan error) {
 	var err error
-	masters, err := getMastersFromZK(swancontext.Instance().Config.Scheduler.ZkUrl)
+	masters, err := getMastersFromZK(swancontext.Instance().Config.Scheduler.ZkPath)
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -215,13 +219,13 @@ func (s *MesosConnector) Start(ctx context.Context, mesosFailureChan chan error)
 
 	s.ClusterID = state.Cluster
 	if s.ClusterID == "" {
-		s.ClusterID = "Unnamed"
+		s.ClusterID = "cluster"
 	}
 
 	r, _ := regexp.Compile("([\\-\\.\\$\\*\\+\\?\\{\\}\\(\\)\\[\\]\\|]+)")
 	match := r.MatchString(s.ClusterID)
 	if match {
-		logrus.Warnf(`Swan do not work with mesos cluster name(%s) with special characters "-.$*+?{}()[]|".`)
+		logrus.Warnf(`Swan do not work with mesos cluster name(%s) with special characters "-.$*+?{}()[]|".`, s.ClusterID)
 		s.ClusterID = r.ReplaceAllString(s.ClusterID, "")
 		logrus.Infof("Swan acceptable cluster name: %s", s.ClusterID)
 	}
