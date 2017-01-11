@@ -597,7 +597,7 @@ func (n *Node) openWAL(snapshot *raftpb.Snapshot) (*wal.WAL, error) {
 
 // replays WAL entries into the raft intance
 func (n *Node) replayWAL() (*wal.WAL, error) {
-	log.L.Infof("replaying WAL of member %s", n.id)
+	log.L.Infof("replaying WAL of member %d", n.id)
 	snapshot, err := n.loadSnapshot()
 	if err != nil {
 		return nil, err
@@ -770,6 +770,10 @@ func (n *Node) maybeTriggerSnapshot() {
 
 	log.L.Printf("maybeTriggerSnapshot: Compact log at inex %d", compactIndex)
 	n.snapshotIndex = n.appliedIndex
+}
+
+func (n *Node) GetAgents() ([]*swan.Agent, error) {
+	return n.store.GetAgents()
 }
 
 func (n *Node) Process(ctx context.Context, m raftpb.Message) error {

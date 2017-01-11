@@ -5,11 +5,11 @@ import (
 
 	"github.com/Dataman-Cloud/swan-search/src/config"
 	"github.com/Dataman-Cloud/swan-search/src/search"
+	"github.com/itsjamie/gin-cors"
 
 	swanclient "github.com/Dataman-Cloud/swan/go-swan"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
-	"github.com/itsjamie/gin-cors"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 
 	for _, cluster := range searchConfig.Clusters {
 		for cName, cAddrs := range cluster {
-			swanClient, err := swanclient.NewClient(cAddrs)
+			swanClient, err := swanclient.NewClient(cAddrs, cName)
 			if err != nil {
 				log.Errorf("fails to setup cluster client:%s", cName)
 				continue

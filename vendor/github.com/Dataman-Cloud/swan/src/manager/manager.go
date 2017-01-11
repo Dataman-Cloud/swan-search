@@ -2,12 +2,18 @@ package manager
 
 import (
 	"fmt"
+	"sync"
 
+	"github.com/Dataman-Cloud/swan/src/apiserver"
+	"github.com/Dataman-Cloud/swan/src/config"
 	log "github.com/Dataman-Cloud/swan/src/context_logger"
+	"github.com/Dataman-Cloud/swan/src/event"
 	"github.com/Dataman-Cloud/swan/src/manager/framework"
 	fstore "github.com/Dataman-Cloud/swan/src/manager/framework/store"
 	"github.com/Dataman-Cloud/swan/src/manager/raft"
+	rafttypes "github.com/Dataman-Cloud/swan/src/manager/raft/types"
 	"github.com/Dataman-Cloud/swan/src/swancontext"
+	"github.com/Dataman-Cloud/swan/src/types"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
@@ -21,9 +27,15 @@ type Manager struct {
 
 	framework *framework.Framework
 
-	cluster []string
+	clusterAddrs []string
 
 	criticalErrorChan chan error
+
+	agents    map[string]types.Agent
+	agentLock sync.RWMutex
+
+	janitorSubscriber  *event.JanitorSubscriber
+	resolverSubscriber *event.DNSSubscriber
 }
 
 func New(db *bolt.DB) (*Manager, error) {
@@ -38,7 +50,7 @@ func New(db *bolt.DB) (*Manager, error) {
 	}
 	manager.raftNode = raftNode
 
-	manager.cluster = swancontext.Instance().Config.SwanCluster
+	manager.clusterAddrs = swancontext.Instance().Config.SwanClusterAddrs
 
 	frameworkStore := fstore.NewStore(db, raftNode)
 	manager.framework, err = framework.New(frameworkStore, swancontext.Instance().ApiServer)
@@ -46,6 +58,12 @@ func New(db *bolt.DB) (*Manager, error) {
 		logrus.Errorf("init framework failed. Error: ", err.Error())
 		return nil, err
 	}
+
+	managerApi := &ManagerApi{manager}
+	apiserver.Install(swancontext.Instance().ApiServer, managerApi)
+
+	manager.resolverSubscriber = event.NewDNSSubscriber()
+	manager.janitorSubscriber = event.NewJanitorSubscriber()
 
 	return manager, nil
 }
@@ -56,6 +74,10 @@ func (manager *Manager) Stop(cancel context.CancelFunc) {
 }
 
 func (manager *Manager) Start(ctx context.Context) error {
+	if err := manager.LoadAgentData(); err != nil {
+		return err
+	}
+
 	leadershipCh, QueueCancel := manager.raftNode.SubscribeLeadership()
 	defer QueueCancel()
 
@@ -145,7 +167,7 @@ func (manager *Manager) handleLeaderChangeEvents(ctx context.Context, leaderChan
 			if int(leader) == 0 {
 				leaderAddr = ""
 			} else {
-				leaderAddr = manager.cluster[int(leader)-1]
+				leaderAddr = manager.clusterAddrs[int(leader)-1]
 			}
 
 			swancontext.Instance().ApiServer.UpdateLeaderAddr(leaderAddr)
@@ -155,4 +177,104 @@ func (manager *Manager) handleLeaderChangeEvents(ctx context.Context, leaderChan
 			return
 		}
 	}
+}
+
+func (manager *Manager) LoadAgentData() error {
+	agents, err := manager.raftNode.GetAgents()
+	if err != nil {
+		return err
+	}
+
+	manager.agents = make(map[string]types.Agent)
+	for _, agentMetadata := range agents {
+		agent := types.Agent{
+			ID:         agentMetadata.ID,
+			RemoteAddr: agentMetadata.RemoteAddr,
+			Status:     agentMetadata.Status,
+			Labels:     agentMetadata.Labels,
+		}
+
+		manager.AddAgentAcceptor(agent)
+
+		manager.agentLock.Lock()
+		manager.agents[agent.ID] = agent
+		manager.agentLock.Unlock()
+	}
+
+	return nil
+}
+
+func (manager *Manager) AddAgent(agent types.Agent) error {
+	agentMetadata := &rafttypes.Agent{
+		ID:         agent.ID,
+		RemoteAddr: agent.RemoteAddr,
+		Status:     agent.Status,
+		Labels:     agent.Labels,
+	}
+
+	storeActions := []*rafttypes.StoreAction{&rafttypes.StoreAction{
+		Action: rafttypes.StoreActionKindCreate,
+		Target: &rafttypes.StoreAction_Agent{agentMetadata},
+	}}
+
+	if err := manager.raftNode.ProposeValue(context.TODO(), storeActions, nil); err != nil {
+		return err
+	}
+
+	manager.AddAgentAcceptor(agent)
+
+	manager.agentLock.Lock()
+	manager.agents[agent.ID] = agent
+	manager.agentLock.Unlock()
+	return nil
+}
+
+func (manager *Manager) GetAgents() map[string]types.Agent {
+	return manager.agents
+}
+
+func (manager *Manager) UpdateAgent(agent types.Agent) error {
+	return nil
+}
+
+func (manager *Manager) GetAgent(agentID string) types.Agent {
+	manager.agentLock.RLock()
+	defer manager.agentLock.RUnlock()
+	return manager.agents[agentID]
+}
+
+func (manager *Manager) DeleteAgent(agentID string) error {
+	agentMetadata := &rafttypes.Agent{
+		ID: agentID,
+	}
+
+	storeActions := []*rafttypes.StoreAction{&rafttypes.StoreAction{
+		Action: rafttypes.StoreActionKindRemove,
+		Target: &rafttypes.StoreAction_Agent{agentMetadata},
+	}}
+
+	if err := manager.raftNode.ProposeValue(context.TODO(), storeActions, nil); err != nil {
+		return err
+	}
+
+	manager.agentLock.Lock()
+	delete(manager.agents, agentID)
+	manager.agentLock.Unlock()
+	return nil
+}
+
+func (manager *Manager) AddAgentAcceptor(agent types.Agent) {
+	resolverAcceptor := types.ResolverAcceptor{
+		ID:         agent.ID,
+		RemoteAddr: "http://" + agent.RemoteAddr + config.API_PREFIX + "/agent/resolver/event",
+		Status:     agent.Status,
+	}
+	manager.resolverSubscriber.AddAcceptor(resolverAcceptor)
+
+	janitorAcceptor := types.JanitorAcceptor{
+		ID:         agent.ID,
+		RemoteAddr: "http://" + agent.RemoteAddr + config.API_PREFIX + "/agent/janitor/event",
+		Status:     agent.Status,
+	}
+	manager.janitorSubscriber.AddAcceptor(janitorAcceptor)
 }

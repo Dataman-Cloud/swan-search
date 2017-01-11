@@ -5,7 +5,7 @@
 			"importpath": "github.com/Dataman-Cloud/swan",
 			"repository": "https://github.com/Dataman-Cloud/swan",
 			"vcs": "git",
-			"revision": "e37b8e2eac043e7d31a87ab9ddb1fdacb8f5c9ac",
+			"revision": "0b255c2a3093ebbcd5cf5487d28896bb82813c3b",
 			"branch": "master",
 			"notests": true
 		},
@@ -148,6 +148,14 @@
 			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
 			"vcs": "git",
 			"revision": "bfee1239d796830ca346767650cce5ba90d58c57",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/vmihailenco/msgpack.v2",
+			"repository": "https://gopkg.in/vmihailenco/msgpack.v2",
+			"vcs": "git",
+			"revision": "a1382b1ce0c749733b814157c245e02cc1f41076",
 			"branch": "master",
 			"notests": true
 		}

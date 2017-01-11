@@ -3,14 +3,16 @@ package state
 import (
 	"time"
 
+	"github.com/Dataman-Cloud/swan/src/manager/framework/event"
 	"github.com/Dataman-Cloud/swan/src/mesosproto/mesos"
 	"github.com/Dataman-Cloud/swan/src/types"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/golang/protobuf/proto"
 )
 
 // load app data frm persistent data
-func LoadAppData() (map[string]*App, error) {
+func LoadAppData(userEventChan chan *event.UserEvent) (map[string]*App, error) {
 	raftApps, err := persistentStore.ListApps()
 	if err != nil {
 		return nil, err
@@ -20,14 +22,23 @@ func LoadAppData() (map[string]*App, error) {
 
 	for _, raftApp := range raftApps {
 		app := &App{
-			ID:             raftApp.ID,
-			Name:           raftApp.Name,
-			CurrentVersion: VersionFromRaft(raftApp.Version),
-			State:          raftApp.State,
-			Mode:           AppMode(raftApp.Version.Mode),
-			Created:        time.Unix(0, raftApp.CreatedAt),
-			Updated:        time.Unix(0, raftApp.UpdatedAt),
-			slots:          make(map[int]*Slot),
+			ID:      raftApp.ID,
+			Name:    raftApp.Name,
+			State:   raftApp.State,
+			Mode:    AppMode(raftApp.Version.Mode),
+			Created: time.Unix(0, raftApp.CreatedAt),
+			Updated: time.Unix(0, raftApp.UpdatedAt),
+			slots:   make(map[int]*Slot),
+		}
+
+		app.UserEventChan = userEventChan
+
+		if raftApp.Version != nil {
+			app.CurrentVersion = VersionFromRaft(raftApp.Version)
+		} else {
+			// TODO raftApp.Version should not be nil but we need more infomation to
+			// find the reason cause the raftApp.Version nil
+			logrus.Errorf("app: %s version was nil", app.ID)
 		}
 
 		if raftApp.ProposedVersion != nil {
