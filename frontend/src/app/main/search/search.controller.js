@@ -8,6 +8,7 @@ export class SearchController {
     this.searchBackend = searchBackend;
     this.monitorBase = BACKEND_URL_BASE.monitorBase;
     this.swanBase = BACKEND_URL_BASE.swanBase;
+    this.appDomain = BACKEND_URL_BASE.appDomain;
     this.keyword = '';
     this.clusters = [];
     this.apps = [];
@@ -20,15 +21,15 @@ export class SearchController {
 
   }
 
-
   searchClusters() {
     this.apps = [];
 
     this.searchBackend.searchApps(this.keyword).get(data => {
       if (Array.isArray(data.data)) {
-        this.apps = data.data.filter(function (item, index) {
-            return item.Type === 'app'
-        })
+        this.apps = data.data.filter(item => item.Type === 'app').map(app => {
+          app.formatID = app.ID.split('-').join('.');
+          return app;
+        });
       }
     })
   }
