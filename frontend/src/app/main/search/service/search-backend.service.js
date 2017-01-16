@@ -7,6 +7,6 @@ export class searchBackend {
   }
 
   searchApps(data) {
-    return this.$resource(this.BACKEND_URL_BASE.defaultBase + '/search/v1/luckysearch', {keyword: data});
+    return this.$resource(`${this.BACKEND_URL_BASE.defaultBase}/search/v1/luckysearch`, {keyword: data});
   }
 }
