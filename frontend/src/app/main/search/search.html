@@ -23,7 +23,7 @@
     <ul ng-show="vm.apps.length">
       <li ng-repeat="app in vm.apps track by $index">
         <h3><a
-          ng-href="{/vm.swanBase/}/app{/'?cluster=' + app.Param.ClusterId + '&user=' + app.Param.RunAs + '&app=' + app.Param.AppId/}"
+          ng-href="{/vm.swanBase/}/app{/'?cluster=' + app.Param.ClusterId + '&user=' + app.Param.RunAs + '&app=' + app.Param.AppName/}"
           target="_blank">{/app.ID/}</a></h3>
         <div class="list-dl-h" layout="column">
           <dl layout="row">
@@ -37,7 +37,7 @@
               <small>申请/占用</small>
             </dt>
             <dd>???/??? <a
-              ng-href="{/vm.monitorBase/}{/'?clusterid=' + app.Param.ClusterId + '&userid=' + app.Param.RunAs + '&appid=' + app.Param.AppId + '&start=' + vm.start + '&end=' + vm.end + '&metric=cpu'/}"
+              ng-href="{/vm.monitorBase/}{/'?cluster=' + app.Param.ClusterId + '&user=' + app.Param.RunAs + '&app=' + app.Param.AppName + '&start=' + vm.start + '&end=' + vm.end + '&metric=cpu'/}"
               target="_blank"><i class="fa fa-line-chart"></i></a></dd>
           </dl>
           <dl layout="row">
@@ -45,13 +45,13 @@
               <small>申请/占用</small>
             </dt>
             <dd>???/??? <a
-              ng-href="{/vm.monitorBase/}{/'?clusterid=' + app.Param.ClusterId + '&userid=' + app.Param.RunAs + '&appid=' + app.Param.AppId + '&start=' + vm.start + '&end=' + vm.end + '&metric=memory'/}"
+              ng-href="{/vm.monitorBase/}{/'?cluster=' + app.Param.ClusterId + '&user=' + app.Param.RunAs + '&app=' + app.Param.AppName + '&start=' + vm.start + '&end=' + vm.end + '&metric=memory'/}"
               target="_blank"><i class="fa fa-line-chart"></i></a></dd>
           </dl>
           <dl layout="row">
             <dt>
               <a
-                ng-href="{/vm.swanBase/}/task{/'?task=0' + '&cluster=' + app.Param.ClusterId + '&user=' + app.Param.RunAs + '&app=' + app.Param.AppId/}"
+                ng-href="{/vm.swanBase/}/task{/'?task=0' + '&cluster=' + app.Param.ClusterId + '&user=' + app.Param.RunAs + '&app=' + app.Param.AppName/}"
                 target="_blank">0-{/app.ID/}</a>
             </dt>
           </dl>
