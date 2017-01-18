@@ -35,7 +35,7 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 					Name: app.Name,
 					Type: DOCUMENT_APP,
 					Param: map[string]string{
-						"AppId":     app.ID,
+						"AppName":   app.Name,
 						"ClusterId": app.ClusterID,
 						"RunAs":     app.RunAs,
 					},
@@ -45,12 +45,13 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 				if appDetail, err := swanClient.GetApplication(app.ID); err == nil {
 					for _, task := range appDetail.Tasks {
 						taskNum := strings.Split(task.ID, "-")[0]
+						appName := strings.Split(task.ID, "-")[1]
 						store.Set(task.ID, Document{
 							ID:   task.ID,
 							Name: task.ID,
 							Type: DOCUMENT_TASK,
 							Param: map[string]string{
-								"AppId":     app.ID,
+								"AppName":   appName,
 								"TaskIndex": taskNum,
 								"ClusterId": app.ClusterID,
 								"RunAs":     app.RunAs,
