@@ -135,13 +135,13 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 		doc := searchApi.PrefetchStore.Get(data.TaskId)
 		if doc == nil {
 			taskNum := strings.Split(data.TaskId, "-")[0]
-			appId := strings.Split(data.TaskId, "-")[1]
+			appName := strings.Split(data.TaskId, "-")[1]
 			searchApi.PrefetchStore.Set(data.TaskId, Document{
 				ID:   data.TaskId,
 				Name: data.TaskId,
 				Type: DOCUMENT_TASK,
 				Param: map[string]string{
-					"AppId":     appId,
+					"AppName":   appName,
 					"TaskIndex": taskNum,
 					"ClusterId": data.ClusterId,
 					"RunAs":     data.RunAs,
@@ -159,7 +159,7 @@ func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 				Name: data.Name,
 				Type: DOCUMENT_APP,
 				Param: map[string]string{
-					"AppId":     data.AppId,
+					"AppName":   data.Name,
 					"ClusterId": data.ClusterId,
 					"RunAs":     data.RunAs,
 				},
