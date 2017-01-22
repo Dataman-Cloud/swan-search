@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/Dataman-Cloud/swan/src/config"
+	"github.com/Dataman-Cloud/swan/src/node"
 	"github.com/Dataman-Cloud/swan/src/version"
-	"github.com/boltdb/bolt"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -49,16 +49,6 @@ func main() {
 			Usage:  "customize debug level [debug|info|error]",
 			EnvVar: "SWAN_LOG_LEVEL",
 		},
-		cli.IntFlag{
-			Name:   "raftid",
-			Usage:  "unique raft node id within the cluster. should be 1,2 or 3 within a 3-managers cluster",
-			EnvVar: "SWAN_RAFT_ID",
-		},
-		cli.StringFlag{
-			Name:   "raft-cluster",
-			Usage:  "raft cluster peers. eg. 192.168.1.1:1211,192.168.1.2.1211",
-			EnvVar: "SWAN_RAFT_CLUSTER",
-		},
 		cli.StringFlag{
 			Name:   "mode",
 			Usage:  "server mode, manager|agent|mixed ",
@@ -74,6 +64,48 @@ func main() {
 			Usage:  "domain which resolve to proxies. eg. access a slot by 0.appname.runas.clustername.domain",
 			EnvVar: "SWAN_DOMAIN",
 		},
+		cli.StringFlag{
+			Name:   "listen-addr",
+			Usage:  "listener address for agent",
+			EnvVar: "SWAN_LISTEN_ADDR",
+		},
+		cli.StringFlag{
+			Name:   "advertise-addr",
+			Usage:  "advertise address for agent",
+			EnvVar: "SWAN_ADVERTISE_ADDR",
+		},
+		cli.StringFlag{
+			Name:   "raft-listen-addr",
+			Usage:  "swan raft serverlistener address",
+			EnvVar: "SWAN_RAFT_LISTEN_ADDR",
+		},
+		cli.StringFlag{
+			Name:   "raft-advertise-addr",
+			Usage:  "swan raft advertise address",
+			EnvVar: "SWAN_RAFT_ADVERTISE_ADDR",
+		},
+		cli.StringFlag{
+			Name:   "join-addrs",
+			Usage:  "the addrs new node join to. Splited by ','",
+			EnvVar: "SWAN_JOIN_ADDRS",
+		},
+		cli.StringFlag{
+			Name:   "janitor-advertise-ip",
+			Usage:  "janitor proxy advertise ip",
+			EnvVar: "SWAN_JANITOR_ADVERTISE_IP",
+		},
+
+		//cli.StringFlag{
+		//Name:   "janitor-listen-ip",
+		//Usage:  "janitor proxy listener ip",
+		//EnvVar: "SWAN_JANITOR_LISTEN_IP",
+		//},
+
+		//cli.StringFlag{
+		//Name:   "dns-listen-addr",
+		//Usage:  "dns proxy listener address",
+		//EnvVar: "SWAN_DNS_LISTEN_ADDR",
+		//},
 	}
 	app.Action = func(c *cli.Context) error {
 		config, err := config.NewConfig(c)
@@ -84,15 +116,7 @@ func main() {
 
 		setupLogger(config.LogLevel)
 
-		os.MkdirAll(config.DataDir, 0700)
-
-		db, err := bolt.Open(config.DataDir+"swan.db", 0600, nil)
-		if err != nil {
-			logrus.Errorf("Init store engine failed:%s", err)
-			return err
-		}
-
-		node, err := NewNode(config, db)
+		node, err := node.NewNode(config)
 		if err != nil {
 			logrus.Error("Node initialization failed")
 			return err

@@ -35,11 +35,11 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 					Name: app.Name,
 					Type: DOCUMENT_APP,
 					Param: map[string]string{
-						"AppName":   app.Name,
-						"ClusterId": app.ClusterID,
-						"RunAs":     app.RunAs,
+						"appName":   app.Name,
+						"clusterID": app.ClusterID,
+						"runAs":     app.RunAs,
 					},
-					ClusterId: app.ClusterID,
+					ClusterID: app.ClusterID,
 				})
 				log.Infof("add app:%s\n", app.ID)
 				if appDetail, err := swanClient.GetApplication(app.ID); err == nil {
@@ -51,12 +51,12 @@ func (indexer *SwanIndexer) Index(store *DocumentStorage) {
 							Name: task.ID,
 							Type: DOCUMENT_TASK,
 							Param: map[string]string{
-								"AppName":   appName,
-								"TaskIndex": taskNum,
-								"ClusterId": app.ClusterID,
-								"RunAs":     app.RunAs,
+								"appName":   appName,
+								"taskIndex": taskNum,
+								"clusterID": app.ClusterID,
+								"runAs":     app.RunAs,
 							},
-							ClusterId: app.ClusterID,
+							ClusterID: app.ClusterID,
 						})
 						log.Infof("add task:%s\n", task.ID)
 					}

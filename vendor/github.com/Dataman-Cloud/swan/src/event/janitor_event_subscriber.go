@@ -2,8 +2,6 @@ package event
 
 import (
 	"encoding/json"
-	"errors"
-	"strings"
 	"sync"
 
 	"github.com/Dataman-Cloud/swan/src/types"
@@ -49,33 +47,26 @@ func (js *JanitorSubscriber) AddAcceptor(acceptor types.JanitorAcceptor) {
 }
 
 func (js *JanitorSubscriber) Write(e *Event) error {
-	payload, ok := e.Payload.(*TaskInfoEvent)
-	if !ok {
-		return errors.New("payload type error")
+	janitorEvent, err := BuildJanitorEvent(e)
+	if err != nil {
+		return err
 	}
 
-	rgevent := &upstream.TargetChangeEvent{}
-	if e.Type == EventTypeTaskAdd {
-		rgevent.Change = "add"
-	} else {
-		rgevent.Change = "del"
-	}
-
-	rgevent.TargetIP = payload.Ip
-	rgevent.TargetPort = payload.Port
-	rgevent.TargetName = strings.ToLower(strings.Replace(payload.TaskId, "-", ".", -1))
-
-	go js.pushJanitorEvent(rgevent)
+	go js.pushJanitorEvent(janitorEvent)
 
 	return nil
 }
 
 func (js *JanitorSubscriber) InterestIn(e *Event) bool {
-	if e.Type == EventTypeTaskAdd {
+	if e.AppMode != "replicates" {
+		return false
+	}
+
+	if e.Type == EventTypeTaskHealthy {
 		return true
 	}
 
-	if e.Type == EventTypeTaskRm {
+	if e.Type == EventTypeTaskUnhealthy {
 		return true
 	}
 
@@ -91,7 +82,7 @@ func (js *JanitorSubscriber) pushJanitorEvent(event *upstream.TargetChangeEvent)
 
 	js.acceptorLock.RLock()
 	for _, acceptor := range js.acceptors {
-		if err := sendEventByHttp(acceptor.RemoteAddr, "POST", data); err != nil {
+		if err := SendEventByHttp(acceptor.RemoteAddr, "POST", data); err != nil {
 			logrus.Infof("send janitor event by http to %s got error: %s", acceptor.RemoteAddr, err.Error())
 		}
 	}

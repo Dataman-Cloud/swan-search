@@ -150,8 +150,12 @@ func (app *App) ScaleDown(removeInstances int) error {
 		return errors.New("app not in normal state")
 	}
 
+	if removeInstances <= 0 {
+		return errors.New("please specify atleast 1 task to scale-down")
+	}
+
 	if removeInstances >= int(app.CurrentVersion.Instances) {
-		return errors.New(fmt.Sprintf("no more than %d instances can be shutdown", app.CurrentVersion.Instances))
+		return errors.New(fmt.Sprintf("no more than %d tasks can be shutdown", app.CurrentVersion.Instances))
 	}
 
 	app.BeginTx()
@@ -280,6 +284,13 @@ func (app *App) CancelUpdate() error {
 	return nil
 }
 
+func (app *App) ServiceDiscoveryURL() string {
+	domain := swancontext.Instance().Config.Janitor.Domain
+	url := strings.ToLower(strings.Replace(app.ID, "-", ".", -1))
+	s := []string{url, domain}
+	return strings.Join(s, ".")
+}
+
 func (app *App) IsReplicates() bool {
 	return app.Mode == APP_MODE_REPLICATES
 }
@@ -312,16 +323,21 @@ func (app *App) SetState(state string) {
 }
 
 func (app *App) EmitAppEvent(eventType string) {
+	app.EmitEvent(app.BuildAppEvent(eventType))
+}
+
+func (app *App) BuildAppEvent(eventType string) *swanevent.Event {
 	e := &swanevent.Event{Type: eventType}
-	e.AppId = app.ID
-	e.Payload = &swanevent.AppInfoEvent{
-		AppId:     app.ID,
+	e.AppID = app.ID
+	e.Payload = &types.AppInfoEvent{
+		AppID:     app.ID,
 		Name:      app.Name,
 		State:     app.State,
-		ClusterId: app.ClusterID,
+		ClusterID: app.ClusterID,
 		RunAs:     app.CurrentVersion.RunAs,
 	}
-	app.EmitEvent(e)
+
+	return e
 }
 
 func (app *App) StateIs(state string) bool {
@@ -398,9 +414,9 @@ func (app *App) GetSlots() []*Slot {
 
 func (app *App) SetSlot(index int, slot *Slot) {
 	app.slotsLock.Lock()
-	defer app.slotsLock.Unlock()
-
 	app.slots[index] = slot
+	app.slotsLock.Unlock()
+
 	app.Touch(false)
 }
 
@@ -533,10 +549,6 @@ func validateAndFormatVersion(version *types.Version) error {
 			return errors.New("fixed mode application doesn't support portmapping")
 		}
 
-		if len(version.HealthChecks) > 0 {
-			return errors.New("fixed mode application doesn't health check")
-		}
-
 		if strings.ToLower(version.Container.Docker.Network) != SWAN_RESERVED_NETWORK {
 			return errors.New("fixed mode app suppose the only network driver should be macvlan and name is swan")
 		}
@@ -568,22 +580,40 @@ func validateAndFormatVersion(version *types.Version) error {
 
 		// portName for health check should mandatory
 		for _, hc := range version.HealthChecks {
-			if strings.TrimSpace(hc.PortName) == "" {
-				return errors.New("port name in healthChecks should not be empty and match name in docker's PortMappings")
-			}
-
 			// portName should present in dockers' portMappings definition
 			if !utils.SliceContains(portNames, hc.PortName) {
 				return errors.New(fmt.Sprintf("no port name %s found in docker's PortMappings", hc.PortName))
 			}
 
-			if !utils.SliceContains([]string{"tcp", "http", "TCP", "HTTP"}, hc.Protocol) {
+			if !utils.SliceContains([]string{"tcp", "http", "TCP", "HTTP", "cmd", "CMD"}, hc.Protocol) {
 				return errors.New(fmt.Sprintf("doesn't recoginized protocol %s for health check", hc.Protocol))
 			}
 
-			if hc.Protocol == "http" || hc.Protocol == "HTTP" {
+			if strings.ToLower(hc.Protocol) == "http" {
 				if len(hc.Path) == 0 {
 					return errors.New("no path provided for health check with HTTP protocol")
+				}
+			}
+
+			if strings.ToLower(hc.Protocol) == "cmd" {
+				if len(hc.Value) == 0 {
+					return errors.New("no value provided for health check with CMD ")
+				}
+			}
+
+			if (strings.ToLower(hc.Protocol) == "tcp" || strings.ToLower(hc.Protocol) == "http") && strings.TrimSpace(hc.PortName) == "" {
+				return errors.New("port name in healthChecks should not be empty and match name in docker's PortMappings")
+			}
+		}
+	} else {
+		for _, hc := range version.HealthChecks {
+			if !utils.SliceContains([]string{"cmd", "CMD"}, hc.Protocol) {
+				return errors.New(fmt.Sprintf("doesn't recoginized protocol %s for health check for fixed type app", hc.Protocol))
+			}
+
+			if strings.ToLower(hc.Protocol) == "cmd" {
+				if len(hc.Value) == 0 {
+					return errors.New("no value provided for health check with CMD ")
 				}
 			}
 		}

@@ -2,15 +2,21 @@ package event
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
+	"strings"
 
+	"github.com/Dataman-Cloud/swan/src/types"
+
+	"github.com/Dataman-Cloud/swan-janitor/src/upstream"
+	"github.com/Dataman-Cloud/swan-resolver/nameserver"
 	"github.com/satori/go.uuid"
 )
 
 const (
 	//task_add and task_rm is used for dns/proxy service
-	EventTypeTaskAdd = "task_add"
-	EventTypeTaskRm  = "task_rm"
+	EventTypeTaskHealthy   = "task_healthy"
+	EventTypeTaskUnhealthy = "task_unhealthy"
 
 	EventTypeTaskStatePendingOffer   = "task_state_pending_offer"
 	EventTypeTaskStatePendingKill    = "task_state_pending_killed"
@@ -40,40 +46,22 @@ const (
 )
 
 type Event struct {
-	Id      string
+	ID      string
 	Type    string
-	AppId   string
+	AppID   string
+	AppMode string
 	Payload interface{}
 }
 
 func NewEvent(t string, payload interface{}) *Event {
 	return &Event{
-		Id:      uuid.NewV4().String(),
+		ID:      uuid.NewV4().String(),
 		Type:    t,
 		Payload: payload,
 	}
 }
 
-type TaskInfoEvent struct {
-	Ip        string
-	TaskId    string
-	AppId     string
-	Port      string
-	State     string
-	Healthy   bool
-	ClusterId string
-	RunAs     string
-}
-
-type AppInfoEvent struct {
-	AppId     string
-	Name      string
-	State     string
-	ClusterId string
-	RunAs     string
-}
-
-func sendEventByHttp(addr, method string, data []byte) error {
+func SendEventByHttp(addr, method string, data []byte) error {
 	request, err := http.NewRequest(method, addr, bytes.NewReader(data))
 	if err != nil {
 		return err
@@ -88,4 +76,45 @@ func sendEventByHttp(addr, method string, data []byte) error {
 	}
 
 	return nil
+}
+
+func BuildResolverEvent(e *Event) (*nameserver.RecordGeneratorChangeEvent, error) {
+	payload, ok := e.Payload.(*types.TaskInfoEvent)
+	if !ok {
+		return nil, errors.New("payload type error")
+	}
+
+	resolverEvent := &nameserver.RecordGeneratorChangeEvent{}
+	if e.Type == EventTypeTaskHealthy {
+		resolverEvent.Change = "add"
+	} else {
+		resolverEvent.Change = "del"
+	}
+
+	resolverEvent.Type = "srv"
+	resolverEvent.Ip = payload.IP
+	resolverEvent.Port = payload.Port
+	resolverEvent.DomainPrefix = strings.ToLower(strings.Replace(payload.TaskID, "-", ".", -1))
+
+	return resolverEvent, nil
+}
+
+func BuildJanitorEvent(e *Event) (*upstream.TargetChangeEvent, error) {
+	payload, ok := e.Payload.(*types.TaskInfoEvent)
+	if !ok {
+		return nil, errors.New("payload type error")
+	}
+
+	janitorEvent := &upstream.TargetChangeEvent{}
+	if e.Type == EventTypeTaskHealthy {
+		janitorEvent.Change = "add"
+	} else {
+		janitorEvent.Change = "del"
+	}
+
+	janitorEvent.TargetIP = payload.IP
+	janitorEvent.TargetPort = payload.Port
+	janitorEvent.TargetName = strings.ToLower(strings.Replace(payload.TaskID, "-", ".", -1))
+
+	return janitorEvent, nil
 }
