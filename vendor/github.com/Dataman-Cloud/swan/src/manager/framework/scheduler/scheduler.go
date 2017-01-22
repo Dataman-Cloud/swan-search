@@ -18,17 +18,15 @@ import (
 type Scheduler struct {
 	heartbeater      *time.Ticker
 	mesosFailureChan chan error
+	stopC            chan struct{}
 
-	handlerManager *HandlerManager
-
-	stopC chan struct{}
-
-	AppStorage *memoryStore
-
-	MesosConnector          *mesos_connector.MesosConnector
+	handlerManager          *HandlerManager
 	mesosConnectorCancelFun context.CancelFunc
-	UserEventChan           chan *event.UserEvent
 	store                   store.Store
+
+	AppStorage     *memoryStore
+	UserEventChan  chan *event.UserEvent
+	MesosConnector *mesos_connector.MesosConnector
 }
 
 func NewScheduler(store store.Store) *Scheduler {
@@ -159,4 +157,18 @@ func (scheduler *Scheduler) InvalidateApps() {
 
 func (scheduler *Scheduler) EmitEvent(swanEvent *swanevent.Event) {
 	swancontext.Instance().EventBus.EventChan <- swanEvent
+}
+
+func (scheduler *Scheduler) HealthyTaskEvents() []*swanevent.Event {
+	var healthyEvents []*swanevent.Event
+
+	for _, app := range scheduler.AppStorage.Data() {
+		for _, slot := range app.GetSlots() {
+			if slot.Healthy() {
+				healthyEvents = append(healthyEvents, slot.BuildTaskEvent(swanevent.EventTypeTaskHealthy))
+			}
+		}
+	}
+
+	return healthyEvents
 }

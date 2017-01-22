@@ -27,7 +27,7 @@ func main() {
 
 	for _, cluster := range searchConfig.Clusters {
 		for cName, cAddrs := range cluster {
-			swanClient, err := swanclient.NewClient(cAddrs, cName)
+			swanClient, err := swanclient.NewClient(cAddrs)
 			if err != nil {
 				log.Errorf("fails to setup cluster client:%s", cName)
 				continue

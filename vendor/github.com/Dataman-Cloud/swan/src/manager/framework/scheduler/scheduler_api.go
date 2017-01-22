@@ -2,14 +2,16 @@ package scheduler
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/Dataman-Cloud/swan/src/manager/framework/mesos_connector"
 	"github.com/Dataman-Cloud/swan/src/manager/framework/state"
 	"github.com/Dataman-Cloud/swan/src/types"
 )
 
 func (scheduler *Scheduler) CreateApp(version *types.Version) (*state.App, error) {
 	// TODO
-	existedApp := scheduler.AppStorage.Get(version.AppID)
+	existedApp := scheduler.AppStorage.Get(fmt.Sprintf("%s-%s-%s", version.AppID, version.RunAs, mesos_connector.Instance().ClusterID))
 	if existedApp != nil {
 		return nil, errors.New("app already exists")
 	}
@@ -41,7 +43,7 @@ func (scheduler *Scheduler) DeleteApp(appId string) error {
 	return app.Delete()
 }
 
-func (scheduler *Scheduler) ListApps(appFilterOptions AppFilterOptions) []*state.App {
+func (scheduler *Scheduler) ListApps(appFilterOptions types.AppFilterOptions) []*state.App {
 	apps := make([]*state.App, 0)
 	for _, v := range scheduler.AppStorage.Filter(appFilterOptions) {
 		apps = append(apps, v)

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	swanclient "github.com/Dataman-Cloud/swan/go-swan"
-	swanevent "github.com/Dataman-Cloud/swan/src/event"
+	"github.com/Dataman-Cloud/swan/src/types"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 )
@@ -73,12 +73,12 @@ type SearchApi struct {
 }
 
 type Document struct {
-	ID        string
-	Name      string
-	Type      string
-	GroupId   uint64 `json:"-"`
-	Param     map[string]string
-	ClusterId string
+	ID        string            `json:"id"`
+	Name      string            `json:"name"`
+	Type      string            `json:"type"`
+	GroupId   uint64            `json:"-"`
+	Param     map[string]string `json:"param"`
+	ClusterID string            `json:"clusterID"`
 }
 
 func (searchApi *SearchApi) ApiRegister(router *gin.Engine, middlewares ...gin.HandlerFunc) {
@@ -127,50 +127,50 @@ func (searchApi *SearchApi) ListenSSEService(client swanclient.Swan) {
 func (searchApi *SearchApi) UpdateIndexer(event *swanclient.Event) {
 	switch event.Event {
 	case swanclient.EventTypeTaskStateFinished:
-		data := event.Data.(*swanevent.TaskInfoEvent)
-		searchApi.PrefetchStore.Unset(data.TaskId)
-		fmt.Printf("delete task :%s\n", data.TaskId)
+		data := event.Data.(*types.TaskInfoEvent)
+		searchApi.PrefetchStore.Unset(data.TaskID)
+		fmt.Printf("delete task :%s\n", data.TaskID)
 	case swanclient.EventTypeTaskStatePendingOffer:
-		data := event.Data.(*swanevent.TaskInfoEvent)
-		doc := searchApi.PrefetchStore.Get(data.TaskId)
+		data := event.Data.(*types.TaskInfoEvent)
+		doc := searchApi.PrefetchStore.Get(data.TaskID)
 		if doc == nil {
-			taskNum := strings.Split(data.TaskId, "-")[0]
-			appName := strings.Split(data.TaskId, "-")[1]
-			searchApi.PrefetchStore.Set(data.TaskId, Document{
-				ID:   data.TaskId,
-				Name: data.TaskId,
+			taskNum := strings.Split(data.TaskID, "-")[0]
+			appName := strings.Split(data.TaskID, "-")[1]
+			searchApi.PrefetchStore.Set(data.TaskID, Document{
+				ID:   data.TaskID,
+				Name: data.TaskID,
 				Type: DOCUMENT_TASK,
 				Param: map[string]string{
-					"AppName":   appName,
-					"TaskIndex": taskNum,
-					"ClusterId": data.ClusterId,
-					"RunAs":     data.RunAs,
+					"appName":   appName,
+					"taskIndex": taskNum,
+					"clusterID": data.ClusterID,
+					"runAs":     data.RunAs,
 				},
-				ClusterId: data.ClusterId,
+				ClusterID: data.ClusterID,
 			})
-			fmt.Printf("add task:%s\n", data.TaskId)
+			fmt.Printf("add task:%s\n", data.TaskID)
 		}
 	case swanclient.EventTypeAppStateCreating:
-		data := event.Data.(*swanevent.AppInfoEvent)
-		doc := searchApi.PrefetchStore.Get(data.AppId)
+		data := event.Data.(*types.AppInfoEvent)
+		doc := searchApi.PrefetchStore.Get(data.AppID)
 		if doc == nil {
-			searchApi.PrefetchStore.Set(data.AppId, Document{
-				ID:   data.AppId,
+			searchApi.PrefetchStore.Set(data.AppID, Document{
+				ID:   data.AppID,
 				Name: data.Name,
 				Type: DOCUMENT_APP,
 				Param: map[string]string{
-					"AppName":   data.Name,
-					"ClusterId": data.ClusterId,
-					"RunAs":     data.RunAs,
+					"appName":   data.Name,
+					"clusterID": data.ClusterID,
+					"runAs":     data.RunAs,
 				},
-				ClusterId: data.ClusterId,
+				ClusterID: data.ClusterID,
 			})
-			fmt.Printf("add app:%s\n", data.AppId)
+			fmt.Printf("add app:%s\n", data.AppID)
 		}
 	case swanclient.EventTypeAppStateDeletion:
-		data := event.Data.(*swanevent.AppInfoEvent)
-		searchApi.PrefetchStore.Unset(data.AppId)
-		fmt.Printf("delete app:%s\n", data.AppId)
+		data := event.Data.(*types.AppInfoEvent)
+		searchApi.PrefetchStore.Unset(data.AppID)
+		fmt.Printf("delete app:%s\n", data.AppID)
 
 	}
 	searchApi.Index = searchApi.PrefetchStore.Indices()

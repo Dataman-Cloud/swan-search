@@ -5,7 +5,7 @@
 			"importpath": "github.com/Dataman-Cloud/swan",
 			"repository": "https://github.com/Dataman-Cloud/swan",
 			"vcs": "git",
-			"revision": "0b255c2a3093ebbcd5cf5487d28896bb82813c3b",
+			"revision": "faed2854488366451a5872f97c443980ab44ee34",
 			"branch": "master",
 			"notests": true
 		},

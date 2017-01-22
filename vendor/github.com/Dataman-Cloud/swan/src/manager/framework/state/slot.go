@@ -2,12 +2,14 @@ package state
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	swanevent "github.com/Dataman-Cloud/swan/src/event"
 	"github.com/Dataman-Cloud/swan/src/mesosproto/mesos"
+	"github.com/Dataman-Cloud/swan/src/swancontext"
 	"github.com/Dataman-Cloud/swan/src/types"
 
 	"github.com/Sirupsen/logrus"
@@ -194,6 +196,7 @@ func (slot *Slot) TestOfferMatch(ow *OfferWrapper) bool {
 		for _, constraint := range constraints {
 			cons := strings.Split(constraint, ":")
 			if cons[1] == "LIKE" {
+				logrus.Debugf("attributes for offer is %s", ow.Offer.Attributes)
 				for _, attr := range ow.Offer.Attributes {
 					var value string
 					name := attr.GetName()
@@ -296,7 +299,7 @@ func (slot *Slot) ResourcesNeeded() []*mesos.Resource {
 	}
 
 	if slot.Version.Mem > 0 {
-		resources = append(resources, buildScalarResource("mem", slot.Version.CPUs))
+		resources = append(resources, buildScalarResource("mem", slot.Version.Mem))
 	}
 
 	if slot.Version.Disk > 0 {
@@ -330,7 +333,7 @@ func (slot *Slot) SetState(state string) error {
 	case SLOT_STATE_PENDING_OFFER:
 		slot.EmitTaskEvent(swanevent.EventTypeTaskStatePendingOffer)
 	case SLOT_STATE_PENDING_KILL:
-		slot.EmitTaskEvent(swanevent.EventTypeTaskRm)
+		slot.EmitTaskEvent(swanevent.EventTypeTaskUnhealthy)
 		slot.EmitTaskEvent(swanevent.EventTypeTaskStatePendingKill)
 	case SLOT_STATE_REAP:
 		slot.EmitTaskEvent(swanevent.EventTypeTaskStateReap)
@@ -350,7 +353,7 @@ func (slot *Slot) SetState(state string) error {
 		slot.EmitTaskEvent(swanevent.EventTypeTaskStateFinished)
 	case SLOT_STATE_TASK_FAILED:
 		slot.EmitTaskEvent(swanevent.EventTypeTaskStateFailed)
-		slot.EmitTaskEvent(swanevent.EventTypeTaskRm)
+		slot.EmitTaskEvent(swanevent.EventTypeTaskUnhealthy)
 	case SLOT_STATE_TASK_KILLED:
 		slot.StopRestartPolicy()
 		slot.EmitTaskEvent(swanevent.EventTypeTaskStateKilled)
@@ -413,49 +416,37 @@ func (slot *Slot) Normal() bool {
 	return slot.StateIs(SLOT_STATE_PENDING_OFFER) || slot.StateIs(SLOT_STATE_TASK_RUNNING) || slot.StateIs(SLOT_STATE_TASK_STARTING) || slot.StateIs(SLOT_STATE_TASK_STAGING)
 }
 
-func (slot *Slot) EmitTaskEvent(t string) {
-	e := &swanevent.Event{Type: t}
-	e.AppId = slot.App.ID
-	if slot.App.IsFixed() {
-		e.Payload = &swanevent.TaskInfoEvent{
-			Ip: slot.Ip,
-			//TODO(zliu): get port in fixed mode
-			TaskId:    slot.ID,
-			AppId:     slot.App.ID,
-			State:     slot.State,
-			Healthy:   slot.healthy,
-			ClusterId: slot.App.ClusterID,
-			RunAs:     slot.Version.RunAs,
-		}
-		slot.App.EmitEvent(e)
+func (slot *Slot) EmitTaskEvent(eventType string) {
+	slot.App.EmitEvent(slot.BuildTaskEvent(eventType))
+}
 
-	} else {
-		if len(slot.CurrentTask.HostPorts) > 0 {
-			for _, port := range slot.CurrentTask.HostPorts {
-				e.Payload = &swanevent.TaskInfoEvent{
-					Ip:        slot.AgentHostName,
-					Port:      fmt.Sprintf("%d", port),
-					TaskId:    slot.ID,
-					AppId:     slot.App.ID,
-					State:     slot.State,
-					Healthy:   slot.healthy,
-					ClusterId: slot.App.ClusterID,
-					RunAs:     slot.Version.RunAs,
-				}
-				slot.App.EmitEvent(e)
-			}
-		} else {
-			e.Payload = &swanevent.TaskInfoEvent{
-				TaskId:    slot.ID,
-				AppId:     slot.App.ID,
-				State:     slot.State,
-				Healthy:   slot.healthy,
-				ClusterId: slot.App.ClusterID,
-				RunAs:     slot.Version.RunAs,
-			}
-			slot.App.EmitEvent(e)
-		}
+func (slot *Slot) BuildTaskEvent(eventType string) *swanevent.Event {
+	e := &swanevent.Event{
+		Type:    eventType,
+		AppID:   slot.App.ID,
+		AppMode: string(slot.App.Mode),
 	}
+
+	payload := &types.TaskInfoEvent{
+		TaskID:    slot.ID,
+		AppID:     slot.App.ID,
+		State:     slot.State,
+		Healthy:   slot.healthy,
+		ClusterID: slot.App.ClusterID,
+		RunAs:     slot.Version.RunAs,
+	}
+
+	if slot.App.IsFixed() {
+		payload.IP = slot.Ip
+	} else {
+		payload.IP = slot.AgentHostName
+		if len(slot.CurrentTask.HostPorts) > 0 {
+			payload.Port = strconv.FormatUint(slot.CurrentTask.HostPorts[0], 10)
+		}
+		e.Payload = payload
+	}
+
+	return e
 }
 
 func (slot *Slot) MarkForRollingUpdate() bool {
@@ -469,7 +460,7 @@ func (slot *Slot) Healthy() bool {
 func (slot *Slot) SetHealthy(healthy bool) {
 	slot.healthy = healthy
 	if healthy {
-		slot.EmitTaskEvent(swanevent.EventTypeTaskAdd)
+		slot.EmitTaskEvent(swanevent.EventTypeTaskHealthy)
 	}
 	slot.Touch(false)
 }
@@ -508,6 +499,13 @@ func (slot *Slot) Touch(force bool) {
 
 func (slot *Slot) BeginTx() {
 	slot.inTransaction = true
+}
+
+func (slot *Slot) ServiceDiscoveryURL() string {
+	domain := swancontext.Instance().Config.Janitor.Domain
+	url := strings.ToLower(strings.Replace(slot.ID, "-", ".", -1))
+	s := []string{url, domain}
+	return strings.Join(s, ".")
 }
 
 // here we persist the app anyway, no matter it touched or not

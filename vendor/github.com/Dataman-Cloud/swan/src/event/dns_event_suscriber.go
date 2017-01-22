@@ -2,8 +2,6 @@ package event
 
 import (
 	"encoding/json"
-	"errors"
-	"strings"
 	"sync"
 
 	"github.com/Dataman-Cloud/swan-resolver/nameserver"
@@ -49,33 +47,22 @@ func (subscriber *DNSSubscriber) AddAcceptor(acceptor types.ResolverAcceptor) {
 }
 
 func (subscriber *DNSSubscriber) Write(e *Event) error {
-	payload, ok := e.Payload.(*TaskInfoEvent)
-	if !ok {
-		return errors.New("payload type error")
+	rgEvent, err := BuildResolverEvent(e)
+	if err != nil {
+		return err
 	}
-
-	rgEvent := &nameserver.RecordGeneratorChangeEvent{}
-	if e.Type == EventTypeTaskAdd {
-		rgEvent.Change = "add"
-	} else {
-		rgEvent.Change = "del"
-	}
-
-	rgEvent.Type = "srv"
-	rgEvent.Ip = payload.Ip
-	rgEvent.Port = payload.Port
-	rgEvent.DomainPrefix = strings.ToLower(strings.Replace(payload.TaskId, "-", ".", -1))
 
 	go subscriber.pushResloverEvent(rgEvent)
+
 	return nil
 }
 
 func (subscriber *DNSSubscriber) InterestIn(e *Event) bool {
-	if e.Type == EventTypeTaskAdd {
+	if e.Type == EventTypeTaskHealthy {
 		return true
 	}
 
-	if e.Type == EventTypeTaskRm {
+	if e.Type == EventTypeTaskUnhealthy {
 		return true
 	}
 
@@ -91,7 +78,7 @@ func (subscriber *DNSSubscriber) pushResloverEvent(event *nameserver.RecordGener
 
 	subscriber.acceptorLock.RLock()
 	for _, acceptor := range subscriber.acceptors {
-		if err := sendEventByHttp(acceptor.RemoteAddr, "POST", data); err != nil {
+		if err := SendEventByHttp(acceptor.RemoteAddr, "POST", data); err != nil {
 			logrus.Infof("send reslover event by http to %s got error: %s", acceptor.RemoteAddr, err.Error())
 		}
 	}
